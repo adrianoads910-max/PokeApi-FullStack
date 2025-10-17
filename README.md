@@ -1,15 +1,16 @@
 
-# PokeApi-FullStack
+# 🧩 PokeApi-FullStack
 
-Aplicação Full Stack baseada na **PokéAPI**.  
-Possui duas partes principais: **backend** (API e lógica de servidor) e **frontend** (interface de usuário).
+Aplicação **Full Stack** desenvolvida para consumir e gerenciar dados da **PokéAPI**, com frontend em **Angular + TailwindCSS** e backend em **Python + SQL + JWT** para autenticação.
 
 ---
 
-## 🎯 Visão Geral
+## 🚀 Visão Geral
 
-- **backend**: servidor (por exemplo, Node.js / Express) que consulta a PokéAPI, processa dados e expõe endpoints para o frontend consumir.  
-- **frontend**: app cliente (React, Vue ou outra lib/framework) que consome o backend, exibe dados dos Pokémons, filtros, detalhes, etc.
+O projeto tem como objetivo fornecer uma plataforma moderna e responsiva que exibe informações sobre Pokémons obtidas da PokéAPI.  
+Inclui:
+- **Frontend (Angular)**: Interface interativa com design responsivo via TailwindCSS.
+- **Backend (Python)**: API REST segura, conectada a banco de dados SQL e protegida com JWT.
 
 ---
 
@@ -19,104 +20,173 @@ Possui duas partes principais: **backend** (API e lógica de servidor) e **front
 
 PokeApi-FullStack/
 │
-├── backend/       ← código da API/servidor
-│   ├── src/
-│   └── package.json
+├── backend/                 ← API Python (Flask)
+│   ├── app/
+│   │   ├── models/          ← modelos e tabelas SQL
+│   │   ├── routes/          ← endpoints REST
+│   │   ├── services/        ← regras de negócio
+│   │   ├── auth/            ← autenticação JWT
+│   │   └── **init**.py
+│   ├── requirements.txt
+│   └── config.py
 │
-├── frontend/      ← código da interface web (cliente)
-│   ├── public/
+├── frontend/                ← app Angular + Tailwind
 │   ├── src/
-│   └── package.json
+│   │   ├── app/
+│   │   ├── assets/
+│   │   └── environments/
+│   ├── tailwind.config.js
+│   ├── package.json
+│   └── angular.json
 │
-├── .gitmodules?   ← configuração de submódulos 
-├── README.md
-└── .gitignore
+└── README.md
 
 ````
 
-> ⚠️ Pode ser que `frontend` esteja configurado como submódulo. Se for, é bom remover esse vínculo (ver instruções anteriores).
+---
+
+## 🧩 Tecnologias utilizadas
+
+### 🖥️ Frontend
+- **Angular 18+**
+- **TailwindCSS** (para estilização)
+- **TypeScript**
+- **RxJS / HttpClient** (requisições e observables)
+- **Angular Router** (navegação de rotas)
+
+### ⚙️ Backend
+- **Python 3.11+**
+- **FastAPI** ou **Flask**
+- **SQLAlchemy** (ORM)
+- **SQLite / PostgreSQL / MySQL** (dependendo do ambiente)
+- **PyJWT** (autenticação via JSON Web Token)
+- **Pydantic** (validação de dados)
+- **CORS Middleware** (para comunicação segura com o frontend)
 
 ---
 
-## 🚀 Como rodar localmente
+## 🔐 Autenticação (JWT)
 
-> Pressupõe-se que você tenha **Node.js** e **npm** (ou **yarn**) instalados.
+O backend utiliza **JSON Web Tokens (JWT)** para autenticação:
+- O usuário faz login e recebe um token JWT.
+- Esse token é enviado no header (`Authorization: Bearer <token>`) em cada requisição.
+- O backend valida o token e autoriza o acesso às rotas protegidas.
 
-1. Clone o repositório:
-   ```bash
-   git clone https://github.com/adrianoads910-max/PokeApi-FullStack.git
-   cd PokeApi-FullStack
+---
+
+## 🧠 Funcionalidades principais
+
+✅ Listagem de Pokémons com informações básicas  
+✅ Busca por nome ou tipo  
+✅ Página de detalhes de cada Pokémon  
+✅ Autenticação de usuário (login/logout)  
+✅ Favoritar Pokémons (usuário autenticado)  
+✅ Integração com a PokéAPI  
+✅ API Python segura com JWT  
+✅ Banco SQL para armazenamento de usuários e favoritos
+
+---
+
+## 🧰 Como executar o projeto localmente
+
+### 1️⃣ Clonar o repositório
+```bash
+git clone https://github.com/adrianoads910-max/PokeApi-FullStack.git
+cd PokeApi-FullStack
 ````
 
-2. (Se `frontend` for submódulo) Inicialize os submódulos:
+---
 
-   ```bash
-   git submodule update --init --recursive
-   ```
+### 2️⃣ Backend (Python)
 
-3. No diretório `backend`:
+```bash
+cd backend
+python -m venv venv
+.\venv\Scripts\activate    # (Windows)
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
 
-   ```bash
-   cd backend
-   npm install
-   npm start
-   ```
-
-4. Em outro terminal, no diretório `frontend`:
-
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-   ```
-
-5. Acesse a aplicação no navegador, por exemplo em `http://localhost:3000` (ou outra porta configurada).
+O servidor será iniciado em `http://localhost:8000`.
 
 ---
 
-## 🧰 Tecnologias utilizadas (exemplo)
+### 3️⃣ Frontend (Angular)
 
-* **Node.js** / **Express** (ou outro framework) no backend
-* **Axios** (ou fetch) para requisições HTTP
-* **React** (ou outra lib) no frontend
-* **PokéAPI** como fonte de dados sobre Pokémons
-* Outras dependências conforme `package.json`
+Em outro terminal:
 
----
+```bash
+cd frontend
+npm install
+npm run start
+```
 
-## 🛠 Funcionalidades esperadas (exemplos)
-
-* Listagem de Pokémons com paginação
-* Filtros por tipo, nome ou outras características
-* Página de detalhes de cada Pokémon (habilidades, estatísticas, evolução)
-* Tratamento de erros e loading states
-* Estilização responsiva (mobile / desktop)
+O app será acessível em `http://localhost:4200`.
 
 ---
 
-## 📂 Boas práticas & dicas
+## ⚡ Comunicação Front ↔ Back
 
-* Evite usar **submódulos**, a menos que necessário — isso pode complicar clonar ou versionar (já vimos isso no repositório atual).
-* Sempre documente as rotas do backend (por exemplo, via **Swagger**, **Postman**, ou arquivo `docs/`).
-* Separe claramente os modelos, controladores e serviços no backend.
-* No frontend, use componentes bem organizados (ex: `components/`, `pages/`, `services/`).
+* O Angular consome endpoints do backend Python, por exemplo:
+
+  ```
+  GET http://localhost:8000/api/pokemon
+  POST http://localhost:8000/api/auth/login
+  ```
+* Configure a URL base em `frontend/src/environments/environment.ts`:
+
+  ```ts
+  export const environment = {
+    apiUrl: 'http://localhost:8000/api'
+  };
+  ```
 
 ---
 
-## 📌 Próximos passos e melhorias
+## 🧾 Scripts úteis
 
-* Adicionar autenticação, se aplicável
-* Cache de dados para reduzir chamadas à PokéAPI
-* Versão mobile / PWA
-* Deploy (por exemplo, no Vercel, Netlify, Heroku)
-* Documentação das APIs com exemplos de requisição/resposta
+### Backend
+
+| Comando                         | Ação                           |
+| ------------------------------- | ------------------------------ |
+| `uvicorn app.main:app --reload` | Inicia servidor local          |
+| `pytest`                        | Executa testes                 |
+| `black .`                       | Formata código automaticamente |
+
+### Frontend
+
+| Comando         | Ação                        |
+| --------------- | --------------------------- |
+| `npm run start` | Inicia servidor Angular     |
+| `npm run build` | Gera build de produção      |
+| `npm run lint`  | Analisa o código com eslint |
+
+---
+
+## 🚀 Deploy (sugestão)
+
+* **Backend**: Render, Railway, ou Docker + VPS
+* **Frontend**: Vercel, Netlify ou GitHub Pages
+* Configure variáveis de ambiente:
+
+  ```
+  DATABASE_URL=sqlite:///pokeapi.db
+  SECRET_KEY=<sua_chave_jwt>
+  ```
 
 ---
 
 ## 📄 Licença
 
-Este projeto está licenciado sob a **MIT License**.
+Este projeto está sob a licença MIT.
+Sinta-se à vontade para usar e contribuir!
 
 ---
 
-Se quiser, posso gerar o README já com os comandos exatos do seu projeto (rotas reais, scripts do `package.json`) — você quer que eu monte isso para você?
+### ✨ Autor
+
+**Adriano ADS**
+[GitHub](https://github.com/adrianoads910-max)
+
+
+
