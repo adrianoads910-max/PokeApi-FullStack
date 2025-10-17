@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Blueprint
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -7,12 +7,13 @@ from config import Config
 import os
 import requests  # chamadas externas (PokeAPI)
 
-# ⚠️ Import do favorites_bp fica MAIS ABAIXO, depois de app/db/jwt estarem prontos
-
+# ==============================================
+# Inicialização básica do app
+# ==============================================
 app = Flask(__name__)
 app.config.from_object(Config)
 
-# ✅ Corrigido: CORS liberado para o Angular
+# CORS liberado para o Angular em http://localhost:4200
 CORS(app, resources={r"/*": {"origins": "http://localhost:4200"}}, supports_credentials=True)
 
 db.init_app(app)
@@ -21,17 +22,17 @@ jwt = JWTManager(app)
 # URL Base da PokéAPI
 POKEAPI_BASE_URL = "https://pokeapi.co/api/v2/pokemon/"
 
-# ----------------------------------------------
-# 1. Configuração Inicial e Usuário Admin
-# ----------------------------------------------
+# ==============================================
+# 1) Configuração inicial e usuário admin
+# ==============================================
 with app.app_context():
     db.create_all()
 
-    # Corrigido: aponta para o banco dentro de /instance/
+    # Caminho do banco na pasta /instance
     db_path = os.path.join(app.instance_path, 'db.sqlite3')
     print(f"Banco de dados ativo em: {db_path}")
 
-    # Cria o usuário admin se não existir
+    # Cria usuário admin padrão se não existir
     if not User.query.filter_by(email="admin@teste.com").first():
         user = User(
             name="Administrador",
@@ -43,13 +44,12 @@ with app.app_context():
         db.session.commit()
         print("Usuário admin criado com sucesso!")
 
-# ----------------------------------------------
-# 2. Rotas de Autenticação
-# ----------------------------------------------
-
+# ==============================================
+# 2) Autenticação: registro / login / rota protegida
+# ==============================================
 @app.post("/register")
 def register():
-    data = request.get_json()
+    data = request.get_json() or {}
 
     name = data.get("name")
     nickname = data.get("nickname")
@@ -77,7 +77,7 @@ def register():
 
 @app.post("/login")
 def login():
-    data = request.get_json()
+    data = request.get_json() or {}
     email = data.get("email")
     password = data.get("password")
 
@@ -86,10 +86,10 @@ def login():
     if not user or not check_password_hash(user.password, password):
         return jsonify({"msg": "Credenciais inválidas"}), 401
 
-    # Cria token JWT
+    # Cria token JWT usando o e-mail como identidade
     token = create_access_token(identity=user.email)
 
-    # Retorna também os dados do usuário
+    # Retorna o token e os dados do usuário
     return jsonify({
         "msg": "Login bem-sucedido!",
         "access_token": token,
@@ -102,18 +102,78 @@ def login():
     }), 200
 
 
-
 @app.get("/protected")
 @jwt_required()
 def protected():
     current_user = get_jwt_identity()
     return jsonify({"msg": f"Acesso autorizado para {current_user}"}), 200
 
+# ==============================================
+# 3) Perfil do Usuário (GET/PUT) - Blueprint
+# ==============================================
+profile_bp = Blueprint('profile', __name__, url_prefix="/api/profile")
 
-# ----------------------------------------------
-# 3. Rotas da PokéAPI
-# ----------------------------------------------
+@profile_bp.route("/", methods=["GET"])
+@jwt_required()
+def get_profile():
+    """
+    Retorna os dados do usuário autenticado, com base no e-mail do token.
+    """
+    current_email = get_jwt_identity()
+    user = User.query.filter_by(email=current_email).first()
+    if not user:
+        return jsonify({"msg": "Usuário não encontrado"}), 404
 
+    return jsonify({
+        "id": user.id,
+        "name": user.name,
+        "nickname": user.nickname,
+        "email": user.email
+    }), 200
+
+
+@profile_bp.route("/", methods=["PUT"])
+@jwt_required()
+def update_profile():
+    """
+    Atualiza os dados do usuário autenticado.
+    Campos aceitos: name, nickname, password (opcional).
+    A senha, se enviada, é salva com hash.
+    """
+    current_email = get_jwt_identity()
+    user = User.query.filter_by(email=current_email).first()
+    if not user:
+        return jsonify({"msg": "Usuário não encontrado"}), 404
+
+    data = request.get_json() or {}
+
+    # Atualiza campos básicos
+    if "name" in data and data["name"]:
+        user.name = data["name"]
+    if "nickname" in data and data["nickname"]:
+        user.nickname = data["nickname"]
+
+    # Atualiza senha se enviada
+    if "password" in data and data["password"]:
+        user.password = generate_password_hash(data["password"])
+
+    db.session.commit()
+
+    return jsonify({
+        "msg": "Perfil atualizado com sucesso!",
+        "user": {
+            "id": user.id,
+            "name": user.name,
+            "nickname": user.nickname,
+            "email": user.email
+        }
+    }), 200
+
+app.register_blueprint(profile_bp)
+
+# ==============================================
+# 4) Rotas da PokéAPI (filtros / busca)
+# ==============================================
 @app.get("/pokemon/filter")
 def filter_pokemon_data():
     generation_id = request.args.get('generation')
@@ -216,13 +276,14 @@ def get_pokemon_data(name_or_id):
     except requests.exceptions.RequestException:
         return jsonify({"msg": "Erro ao comunicar com o serviço de Pokémon externo."}), 503
 
-
-# 🔻 Importa e registra o Blueprint após inicializações
+# ==============================================
+# 5) Favoritos (Blueprint existente)
+# ==============================================
 from favorites import favorites_bp
 app.register_blueprint(favorites_bp)
 
-# ----------------------------------------------
-# 4. Execução do App
-# ----------------------------------------------
+# ==============================================
+# 6) Execução do App
+# ==============================================
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
