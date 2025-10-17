@@ -28,7 +28,7 @@ PokeApi-FullStack/
 │   ├── src/
 │   └── package.json
 │
-├── .gitmodules?   ← configuração de submódulos (se houver)
+├── .gitmodules?   ← configuração de submódulos 
 ├── README.md
 └── .gitignore
 
