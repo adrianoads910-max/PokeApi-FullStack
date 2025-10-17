@@ -1,0 +1,15 @@
+/* You can add global styles to this file, and also import other style files */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@theme {
+  --color-brand-blue-dark: #0f2a4f;
+  --color-brand-blue: #1c3b6b;
+  --color-brand-blue-light: #3a68a1;
+  --color-brand-gray: #b8bfc9;
+  --color-brand-white: #ffffff;
+
+}
+

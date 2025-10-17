@@ -1,0 +1,57 @@
+<div
+  class="min-h-screen bg-cover bg-center flex items-center justify-center"
+  style="background-image: url('assets/images/banner.png');"
+
+>
+  <!-- Caixa branca central -->
+  <div
+    class="bg-white bg-opacity-90 rounded-2xl shadow-2xl p-8 max-w-2xl w-full flex flex-col lg:flex-row lg:divide-x divide-gray-300"
+  >
+    <!-- social -->
+    <div
+      class="lg:w-1/2 p-4 flex flex-col items-center justify-center space-y-4"
+    >
+      <h3 class="text-lg font-semibold mb-4 text-gray-700">
+        Conecte-se com:
+      </h3>
+
+      
+    <!-- Botão Cadastrar -->
+    <a
+      routerLink="/register"
+      class="w-full py-3 px-4 text-lg rounded-md bg-red-300 text-slate-950 hover:bg-red-600 hover:text-white transition shadow-md flex items-center justify-center"
+    >
+      <i class="fas fa-user-plus mr-2"></i> Cadastre-se
+    </a>
+
+    <!-- Botão Login -->
+    <a
+      routerLink="/login"
+      class="w-full py-3 px-4 text-lg rounded-md bg-blue-300 text-slate-950 hover:bg-blue-600 hover:text-white transition shadow-md flex items-center justify-center"
+    >
+      <i class="fas fa-sign-in-alt mr-2"></i> Login
+    </a>
+
+    <!-- Botão Lista -->
+    <a
+      routerLink="/lista"
+      class="w-full py-3 px-4 text-lg rounded-md bg-slate-300 text-slate-950 hover:bg-slate-600 hover:text-white transition shadow-md flex items-center justify-center"
+    >
+      <i class="fas fa-list mr-2"></i> Ver Lista de Pokémons
+    </a>
+    </div>
+
+    <!-- (Opcional) texto ou imagem à direita -->
+    <div
+      class="lg:w-1/2 p-6 flex flex-col items-center justify-center text-center"
+    >
+      <h2 class="text-2xl font-bold text-gray-700 mb-4">
+        Bem-vindo à PokéAPI!
+      </h2>
+      <p class="text-gray-600">
+        Explore, capture e favorite seus Pokémons favoritos. Faça login para
+        começar sua jornada!
+      </p>
+    </div>
+  </div>
+</div>

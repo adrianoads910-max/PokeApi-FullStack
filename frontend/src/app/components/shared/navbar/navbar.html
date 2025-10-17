@@ -1,0 +1,105 @@
+<!-- Navbar principal -->
+<nav class="bg-red-400 shadow-md w-full z-50">
+  <div class="max-w-screen-xl mx-auto px-4 py-3 flex justify-between items-center">
+    <!-- Esquerda: logo e título -->
+    <div class="flex items-center space-x-3">
+      <a
+        routerLink="/home"
+        class="flex items-center space-x-2 hover:opacity-90 transition"
+      >
+        <img
+          src="assets/images/pokeball-icon.png"
+          alt="PokéAPI"
+          class="w-8 h-8"
+        />
+        <span class="text-white font-bold text-lg">PokéAPI</span>
+      </a>
+    </div>
+
+    <!-- Navegação desktop -->
+    <div class="hidden md:flex items-center space-x-6">
+      <a routerLink="/lista" routerLinkActive="text-white font-semibold"
+         class="text-slate-100 hover:text-white transition">
+        <i class="fas fa-list mr-1"></i> Poké-Explorer
+      </a>
+
+      <a routerLink="/equipe" routerLinkActive="text-white font-semibold"
+         class="text-slate-100 hover:text-white transition">
+        <i class="fas fa-users mr-1"></i> Equipe
+      </a>
+
+      <a routerLink="/favorites" routerLinkActive="text-white font-semibold"
+         class="text-slate-100 hover:text-white transition">
+        <i class="fas fa-star mr-1"></i> Favoritos
+      </a>
+    </div>
+
+    <!-- Botão hambúrguer (mobile) -->
+    <button
+      class="md:hidden text-white text-2xl focus:outline-none"
+      (click)="isMenuOpen = !isMenuOpen"
+    >
+      <i class="fas" [ngClass]="isMenuOpen ? 'fa-times' : 'fa-bars'"></i>
+    </button>
+
+    <!-- Dropdown do usuário -->
+    <div class="relative ml-4">
+      <button
+        (click)="toggleUserMenu($event)"
+        class="flex items-center space-x-2 text-white hover:bg-red-500 px-4 py-2 rounded-md transition"
+      >
+        <img
+          src="assets/images/pokemon-trainer.png"
+          alt="User"
+          class="w-8 h-8 rounded-full border-2 border-white"
+        />
+        <span *ngIf="user" class="font-semibold text-white">
+          {{ user?.name || (user?.email ? user.email.split('@')[0] : 'Treinador') }}
+        </span>
+        <i class="fas fa-chevron-down"></i>
+      </button>
+
+      <!-- Menu dropdown -->
+      <div
+        *ngIf="isUserMenuOpen"
+        class="absolute right-0 mt-2 w-56 bg-red-400 rounded-md shadow-lg py-2 text-white animate-fadeIn"
+        (click)="$event.stopPropagation()"
+      >
+        <a (click)="navigateTo('/profile')" class="block px-4 py-2 hover:bg-red-500 transition">
+          ⚙️ Dados cadastrais
+        </a>
+        <a (click)="navigateTo('/equipe')" class="block px-4 py-2 hover:bg-red-500 transition">
+          🧢 Minha Equipe
+        </a>
+        <a (click)="navigateTo('/favorites')" class="block px-4 py-2 hover:bg-red-500 transition">
+          ⭐ Meus Favoritos
+        </a>
+        <a (click)="navigateTo('/config')" class="block px-4 py-2 hover:bg-red-500 transition">
+          ⚙️ Configurações
+        </a>
+        <button
+          (click)="logout()"
+          class="w-full text-left px-4 py-2 hover:bg-red-500 transition"
+        >
+          🚪 Sair
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Menu mobile -->
+  <div
+    class="md:hidden bg-red-400 flex flex-col items-center space-y-3 py-4 transition-all duration-300"
+    *ngIf="isMenuOpen"
+  >
+    <a (click)="navigateTo('/list')" class="text-slate-100 hover:text-white transition">
+      <i class="fas fa-list mr-1"></i> Poké-Explorer
+    </a>
+    <a (click)="navigateTo('/equipe')" class="text-slate-100 hover:text-white transition">
+      <i class="fas fa-users mr-1"></i> Equipe
+    </a>
+    <a (click)="navigateTo('/favorites')" class="text-slate-100 hover:text-white transition">
+      <i class="fas fa-star mr-1"></i> Favoritos
+    </a>
+  </div>
+</nav>

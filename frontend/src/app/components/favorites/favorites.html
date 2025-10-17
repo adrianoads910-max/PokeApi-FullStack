@@ -1,0 +1,105 @@
+<div class="min-h-screen bg-gray-50 p-4 sm:p-8">
+  <div class="max-w-7xl mx-auto">
+    <h1 class="text-4xl font-extrabold text-gray-800 mb-6 border-b-4 border-yellow-500 pb-2 flex items-center gap-2">
+      <img src="assets/images/star-on.png" alt="Star" class="w-8 h-8" />
+      Meus Favoritos
+    </h1>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="text-center py-10">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-4 border-yellow-500 mx-auto"></div>
+      <p class="mt-4 text-gray-600 font-medium">Carregando seus Pokémon favoritos...</p>
+    </div>
+
+    <!-- Nenhum favorito -->
+    <div *ngIf="!loading && favorites.length === 0" class="text-center py-16 bg-white rounded-xl shadow-md">
+      <p class="text-xl font-semibold text-gray-600">Você ainda não adicionou nenhum Pokémon aos favoritos.</p>
+      <p class="text-gray-500 mt-2">Explore a Pokédex e clique na ⭐ para favoritar!</p>
+    </div>
+
+    <!-- Grid de favoritos -->
+    <div *ngIf="!loading && favorites.length > 0"
+         class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+
+      <!-- Card -->
+      <div *ngFor="let pokemon of favorites"
+           class="rounded-xl shadow-lg hover:shadow-2xl transition duration-300 cursor-pointer overflow-hidden transform hover:scale-[1.02] border border-gray-100 relative"
+           [ngClass]="getTypeColor(pokemon.types[0], true)"
+           (click)="viewDetails(pokemon)">
+        
+        <!-- Fundo Pokébola e sprite -->
+        <div class="relative p-3 flex justify-center h-36 overflow-hidden">
+          <!-- Pokébola de fundo -->
+          <div 
+            class="absolute inset-0 bg-center bg-no-repeat bg-contain opacity-20 brightness-150"
+            style="background-image: url('assets/images/pokeball.png');">
+          </div>
+
+          <!-- Ícone de estrela -->
+          <img 
+            src="assets/images/star-on.png"
+            alt="Remover dos favoritos"
+            class="absolute top-2 right-2 w-6 h-6 cursor-pointer hover:scale-110 transition z-20"
+            (click)="$event.stopPropagation(); removeFavorite(pokemon.pokemon_id)">
+
+          <!-- Sprite -->
+          <img [src]="pokemon.pokemon_image"
+               [alt]="pokemon.pokemon_name"
+               class="h-full object-contain relative z-10"
+               onerror="this.onerror=null; this.src='https://placehold.co/128x128/f3f4f6/374151?text=?'">
+        </div>
+
+        <!-- Informações -->
+        <div class="p-3 bg-slate-300">
+          <p class="text-xs font-light text-gray-500">#{{ pokemon.pokemon_id | number: '3.0' }}</p>
+          <h3 class="text-lg font-bold text-gray-800 mb-2 truncate">{{ pokemon.pokemon_name }}</h3>
+          <div class="flex flex-wrap gap-1">
+            <span *ngFor="let type of pokemon.types"
+                  [class]="getTypeColor(type.toLowerCase(), true)"
+                  class="text-xs px-2 py-0.5 rounded-full text-white shadow-md uppercase font-medium">
+              {{ type }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de detalhes -->
+  <div *ngIf="showModal" 
+       class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 backdrop-blur-sm" 
+       (click)="closeModal()">
+       
+    <div 
+      class="bg-slate-300 rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden relative transform transition-all border border-gray-200"
+      (click)="$event.stopPropagation()">
+      
+      <!-- Botão fechar -->
+      <button 
+        (click)="closeModal()" 
+        class="absolute top-4 right-4 text-gray-600 hover:text-red-500 transition-colors p-2 rounded-full bg-white/70 backdrop-blur-md shadow-md z-20">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+
+      <!-- Conteúdo do modal -->
+      <div *ngIf="selectedPokemon" class="p-6">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">
+          {{ selectedPokemon.pokemon_name }}
+        </h2>
+        <img [src]="selectedPokemon.pokemon_image" 
+             alt="{{ selectedPokemon.pokemon_name }}" 
+             class="mx-auto h-40 mb-4">
+        <div class="flex flex-wrap justify-center gap-2">
+          <span *ngFor="let type of selectedPokemon.types"
+                [class]="getTypeColor(type.toLowerCase(), true)"
+                class="text-xs px-3 py-1 rounded-full text-white shadow-md uppercase font-medium">
+            {{ type }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
