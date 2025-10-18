@@ -59,6 +59,7 @@ export class List implements OnInit {
   // ==========================================================
   // 🔍 BUSCA E FILTROS
   // ==========================================================
+  activeCategory: 'todos' | 'favoritos' | 'equipe' = 'todos';
 
   searchManual(): void {
     const term = this.manualSearchTerm.trim().toLowerCase();
@@ -93,7 +94,17 @@ export class List implements OnInit {
     this.http.get(`${this.apiUrl}/pokemon/filter`, { params }).subscribe({
       next: (response: any) => {
         this.pokemons = response.results || [];
-        this.totalCount = response.count || 0;
+
+        // Ordenar: Equipe → Favoritos → Restantes
+        this.pokemons.sort((a, b) => {
+          const aEquipe = this.isEquip(a.id) ? 1 : 0;
+          const bEquipe = this.isEquip(b.id) ? 1 : 0;
+          const aFav = this.isFavorite(a.id) ? 1 : 0;
+          const bFav = this.isFavorite(b.id) ? 1 : 0;
+          return (bEquipe - aEquipe) || (bFav - aFav);
+        });
+
+        this.totalCount = this.pokemons.length;
         this.loading = false;
       },
       error: () => {
@@ -121,6 +132,22 @@ export class List implements OnInit {
     this.searchPokemon();
   }
 
+  filterByCategory(category: 'todos' | 'favoritos' | 'equipe'): void {
+    this.activeCategory = category;
+
+    if (category === 'favoritos') {
+      this.pokemons = [...this.favorites];
+      this.totalCount = this.pokemons.length;
+      this.message = 'Exibindo apenas seus Pokémon favoritos.';
+    } else if (category === 'equipe') {
+      this.pokemons = [...this.equipe];
+      this.totalCount = this.pokemons.length;
+      this.message = 'Exibindo sua equipe.';
+    } else {
+      this.searchPokemon();
+    }
+  }
+
   getFilterStyle(isSelected: boolean): string {
     return isSelected
       ? 'bg-red-500 hover:bg-red-600 text-white shadow-lg'
@@ -130,7 +157,6 @@ export class List implements OnInit {
   // ==========================================================
   // ⭐ FAVORITOS
   // ==========================================================
-
   private getAuthHeaders(): HttpHeaders {
     const token = localStorage.getItem('token');
     return new HttpHeaders({
@@ -148,7 +174,7 @@ export class List implements OnInit {
   }
 
   isFavorite(pokemonId: number): boolean {
-    return this.favorites.some(f => f.pokemon_id === pokemonId);
+    return this.favorites.some(f => f.id === pokemonId);
   }
 
   toggleFavorite(pokemon: any): void {
@@ -156,14 +182,14 @@ export class List implements OnInit {
 
     if (this.isFavorite(pokemon.id)) {
       this.http.delete(`${this.apiUrl}/api/favorites/${pokemon.id}`, { headers }).subscribe({
-        next: () => this.favorites = this.favorites.filter(f => f.pokemon_id !== pokemon.id),
+        next: () => this.favorites = this.favorites.filter(f => f.id !== pokemon.id),
         error: (err) => console.error('Erro ao remover favorito:', err)
       });
     } else {
       const payload = {
-        pokemon_id: pokemon.id,
-        pokemon_name: pokemon.name,
-        pokemon_image: pokemon.sprite_url,
+        id: pokemon.id,
+        name: pokemon.name,
+        sprite_url: pokemon.sprite_url,
         height: pokemon.height,
         weight: pokemon.weight,
         abilities: pokemon.abilities,
@@ -180,7 +206,6 @@ export class List implements OnInit {
   // ==========================================================
   // 🕹️ EQUIPE
   // ==========================================================
-
   loadEquipe(): void {
     const headers = this.getAuthHeaders();
     this.http.get(`${this.apiUrl}/api/equipe/`, { headers }).subscribe({
@@ -190,7 +215,7 @@ export class List implements OnInit {
   }
 
   isEquip(pokemonId: number): boolean {
-    return this.equipe.some(e => e.pokemon_id === pokemonId);
+    return this.equipe.some(e => e.id === pokemonId);
   }
 
   toggleEquip(pokemon: any): void {
@@ -198,29 +223,22 @@ export class List implements OnInit {
 
     if (this.isEquip(pokemon.id)) {
       this.http.delete(`${this.apiUrl}/api/equipe/${pokemon.id}`, { headers }).subscribe({
-        next: () => {
-          this.equipe = this.equipe.filter(e => e.pokemon_id !== pokemon.id);
-          console.log(`🗑️ Removido da equipe: ${pokemon.name}`);
-        },
+        next: () => this.equipe = this.equipe.filter(e => e.id !== pokemon.id),
         error: (err) => console.error('Erro ao remover da equipe:', err)
       });
     } else {
       const payload = {
-        pokemon_id: pokemon.id,
-        pokemon_name: pokemon.name,
-        pokemon_image: pokemon.sprite_url,
+        id: pokemon.id,
+        name: pokemon.name,
+        sprite_url: pokemon.sprite_url,
         height: pokemon.height,
         weight: pokemon.weight,
         abilities: pokemon.abilities,
         stats: pokemon.stats,
         types: pokemon.types
       };
-
       this.http.post(`${this.apiUrl}/api/equipe/`, payload, { headers }).subscribe({
-        next: () => {
-          this.equipe.push(payload);
-          console.log(`✅ ${pokemon.name} adicionado à equipe`);
-        },
+        next: () => this.equipe.push(payload),
         error: (err) => {
           if (err.status === 400 && err.error.msg.includes('6 Pokémon')) {
             alert('⚠️ Sua equipe já possui 6 Pokémon!');
@@ -239,7 +257,6 @@ export class List implements OnInit {
   // ==========================================================
   // ⚙️ DETALHES E MODAL
   // ==========================================================
-
   viewDetails(pokemonId: number): void {
     this.loadingDetails = true;
     this.showModal = true;
@@ -262,7 +279,6 @@ export class List implements OnInit {
   // ==========================================================
   // 🎨 CORES E ESTILOS
   // ==========================================================
-
   getTypeColor(type: string, filled = false): string {
     const colors: any = {
       fire: 'bg-red-500', water: 'bg-blue-500', grass: 'bg-green-500',

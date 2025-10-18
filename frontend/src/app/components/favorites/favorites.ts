@@ -2,16 +2,17 @@ import { Component, OnInit } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-favorites',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './favorites.html',
   styleUrls: ['./favorites.css']
 })
 export class Favorites implements OnInit {
-  apiUrl = 'http://localhost:5000'; // ajuste se o backend estiver em outra porta
+  apiUrl = 'http://localhost:5000';
   favorites: any[] = [];
   loading = false;
   selectedPokemon: any = null;
@@ -45,7 +46,7 @@ export class Favorites implements OnInit {
     this.http.get<any[]>(`${this.apiUrl}/api/favorites/`, { headers }).subscribe({
       next: (data) => {
         console.log('✅ Favoritos carregados:', data);
-        this.favorites = data;
+        this.favorites = data || [];
         this.loading = false;
       },
       error: (err) => {
@@ -60,11 +61,18 @@ export class Favorites implements OnInit {
   // ==========================================================
   removeFavorite(pokemonId: number): void {
     const headers = this.getAuthHeaders();
+    const id = pokemonId || 0;
 
-    this.http.delete(`${this.apiUrl}/api/favorites/${pokemonId}`, { headers }).subscribe({
+    if (!id) {
+      console.warn('⚠️ ID do Pokémon inválido para remoção.');
+      return;
+    }
+
+    this.http.delete(`${this.apiUrl}/api/favorites/${id}`, { headers }).subscribe({
       next: () => {
-        console.log('🗑️ Removido dos favoritos:', pokemonId);
-        this.favorites = this.favorites.filter(f => f.pokemon_id !== pokemonId);
+        console.log('🗑️ Removido dos favoritos:', id);
+        this.favorites = this.favorites.filter(f => f.pokemon_id !== id && f.id !== id);
+        this.favorites = [...this.favorites]; // força re-renderização
       },
       error: (err) => {
         console.error('❌ Erro ao remover favorito:', err);
@@ -73,7 +81,7 @@ export class Favorites implements OnInit {
   }
 
   // ==========================================================
-  // 🔍 VER DETALHES DO POKÉMON (opcional, modal simples)
+  // 🔍 VER DETALHES DO POKÉMON
   // ==========================================================
   viewDetails(pokemon: any): void {
     this.selectedPokemon = pokemon;
@@ -82,25 +90,24 @@ export class Favorites implements OnInit {
 
   closeModal(): void {
     this.showModal = false;
+    this.selectedPokemon = null;
   }
 
   // ==========================================================
-  // 🎨 COR DOS TIPOS (igual ao list.ts)
+  // 🎨 COR DOS TIPOS
   // ==========================================================
- getTypeColor(type: string, filled: boolean): string {
-  const colors: any = {
-    fire: 'bg-red-500', water: 'bg-blue-500', grass: 'bg-green-500',
-    electric: 'bg-yellow-400', normal: 'bg-gray-400', bug: 'bg-lime-500',
-    poison: 'bg-purple-500', ground: 'bg-yellow-700', fairy: 'bg-pink-400',
-    psychic: 'bg-pink-500', rock: 'bg-yellow-800', ice: 'bg-cyan-400',
-    fighting: 'bg-orange-600', dragon: 'bg-indigo-700', dark: 'bg-gray-800',
-    steel: 'bg-gray-500', ghost: 'bg-violet-700', flying: 'bg-sky-400'
-  };
-  const color = colors[type?.toLowerCase()] || 'bg-gray-300';
-  // Retorna sempre cor sólida — sem opacidade nem /30
-  return color;
-}
-
+  getTypeColor(type: string, filled: boolean): string {
+    const colors: any = {
+      fire: 'bg-red-500', water: 'bg-blue-500', grass: 'bg-green-500',
+      electric: 'bg-yellow-400', normal: 'bg-gray-400', bug: 'bg-lime-500',
+      poison: 'bg-purple-500', ground: 'bg-yellow-700', fairy: 'bg-pink-400',
+      psychic: 'bg-pink-500', rock: 'bg-yellow-800', ice: 'bg-cyan-400',
+      fighting: 'bg-orange-600', dragon: 'bg-indigo-700', dark: 'bg-gray-800',
+      steel: 'bg-gray-500', ghost: 'bg-violet-700', flying: 'bg-sky-400'
+    };
+    const color = colors[type?.toLowerCase()] || 'bg-gray-300';
+    return color; // cor sólida, sem opacidade
+  }
 
   // ==========================================================
   // 🚪 LOGOUT

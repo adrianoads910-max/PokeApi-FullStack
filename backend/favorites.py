@@ -5,78 +5,106 @@ import json
 
 favorites_bp = Blueprint('favorites', __name__, url_prefix="/api/favorites")
 
-# Função auxiliar para obter usuário autenticado
+# ==========================================================
+# 🔐 Helper — obtém usuário autenticado
+# ==========================================================
 def get_user():
     current_user_email = get_jwt_identity()
-    user = User.query.filter_by(email=current_user_email).first()
-    return user
+    return User.query.filter_by(email=current_user_email).first()
 
-
-# ==========================================
-# GET /api/favorites
-# ==========================================
-@favorites_bp.route("/", methods=["GET"])
+# ==========================================================
+# ⭐ GET /api/favorites/
+# Retorna lista padronizada para o frontend
+# ==========================================================
+@favorites_bp.route("/", methods=["GET", "OPTIONS"])
 @jwt_required()
 def get_favorites():
+    if request.method == "OPTIONS":
+        return jsonify({"msg": "ok"}), 200
+
     user = get_user()
     if not user:
         return jsonify({"msg": "Usuário não encontrado"}), 404
 
     favorites = Favorite.query.filter_by(user_id=user.id).all()
-    return jsonify([f.to_dict() for f in favorites]), 200
 
+    results = []
+    for f in favorites:
+        results.append({
+            "id": f.pokemon_id,
+            "name": f.pokemon_name,
+            "sprite_url": f.pokemon_image or "",
+            "height": f.height or 0,
+            "weight": f.weight or 0,
+            "abilities": json.loads(f.abilities or "[]"),
+            "stats": json.loads(f.stats or "{}"),
+            "types": json.loads(f.types or "[]"),
+        })
 
-# ==========================================
-# POST /api/favorites
-# ==========================================
-@favorites_bp.route("/", methods=["POST"])
+    return jsonify(results), 200
+
+# ==========================================================
+# ⭐ POST /api/favorites/
+# Aceita campos de ambos os formatos (frontend e legacy)
+# ==========================================================
+@favorites_bp.route("/", methods=["POST", "OPTIONS"])
 @jwt_required()
 def add_favorite():
+    if request.method == "OPTIONS":
+        return jsonify({"msg": "ok"}), 200
+
     user = get_user()
     if not user:
         return jsonify({"msg": "Usuário não encontrado"}), 404
 
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
 
-    pokemon_id = data.get("pokemon_id")
-    pokemon_name = data.get("pokemon_name")
-    pokemon_image = data.get("pokemon_image")
+    # 🔄 Normalização de campos vindos do front
+    pokemon_id = data.get("pokemon_id") or data.get("id")
+    pokemon_name = data.get("pokemon_name") or data.get("name")
+    pokemon_image = data.get("sprite_url") or data.get("pokemon_image")
     height = data.get("height")
     weight = data.get("weight")
-    abilities = data.get("abilities", [])
-    stats = data.get("stats", {})
-    types = data.get("types", [])
+    abilities = data.get("abilities") or []
+    stats = data.get("stats") or {}
+    types = data.get("types") or []
 
-    if not pokemon_name or not pokemon_id:
+    if not pokemon_id or not pokemon_name:
         return jsonify({"msg": "Nome e ID do Pokémon são obrigatórios"}), 400
 
+    # Evita duplicidade
     if Favorite.query.filter_by(user_id=user.id, pokemon_id=pokemon_id).first():
         return jsonify({"msg": "Pokémon já está nos favoritos"}), 400
 
-    favorite = Favorite(
-        user_id=user.id,
-        pokemon_id=pokemon_id,
-        pokemon_name=pokemon_name,
-        pokemon_image=pokemon_image,
-        height=height,
-        weight=weight,
-        abilities=json.dumps(abilities),
-        stats=json.dumps(stats),
-        types=json.dumps(types)
-    )
-
-    db.session.add(favorite)
-    db.session.commit()
+    try:
+        favorite = Favorite(
+            user_id=user.id,
+            pokemon_id=pokemon_id,
+            pokemon_name=pokemon_name,
+            pokemon_image=pokemon_image,
+            height=height,
+            weight=weight,
+            abilities=json.dumps(abilities),
+            stats=json.dumps(stats),
+            types=json.dumps(types),
+        )
+        db.session.add(favorite)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": f"Erro ao salvar favorito: {str(e)}"}), 400
 
     return jsonify({"msg": f"{pokemon_name} adicionado aos favoritos!"}), 201
 
-
-# ==========================================
-# DELETE /api/favorites/<id>
-# ==========================================
-@favorites_bp.route("/<int:pokemon_id>", methods=["DELETE"])
+# ==========================================================
+# 🗑️ DELETE /api/favorites/<id>
+# ==========================================================
+@favorites_bp.route("/<int:pokemon_id>", methods=["DELETE", "OPTIONS"])
 @jwt_required()
 def delete_favorite(pokemon_id):
+    if request.method == "OPTIONS":
+        return jsonify({"msg": "ok"}), 200
+
     user = get_user()
     if not user:
         return jsonify({"msg": "Usuário não encontrado"}), 404
@@ -87,5 +115,4 @@ def delete_favorite(pokemon_id):
 
     db.session.delete(favorite)
     db.session.commit()
-
     return jsonify({"msg": "Favorito removido!"}), 200

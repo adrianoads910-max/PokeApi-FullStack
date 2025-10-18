@@ -2,11 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-equip',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './equip.html',
   styleUrls: ['./equip.css']
 })
@@ -24,6 +25,9 @@ export class Equip implements OnInit {
     this.loadEquipe();
   }
 
+  // ==========================================================
+  // 🔐 AUTH HEADER
+  // ==========================================================
   private getAuthHeaders(): HttpHeaders {
     const token = localStorage.getItem('token');
     return new HttpHeaders({
@@ -32,13 +36,17 @@ export class Equip implements OnInit {
     });
   }
 
+  // ==========================================================
+  // ⚙️ CARREGAR EQUIPE
+  // ==========================================================
   loadEquipe(): void {
     this.loading = true;
     const headers = this.getAuthHeaders();
 
     this.http.get<any[]>(`${this.apiUrl}/api/equipe/`, { headers }).subscribe({
       next: (data) => {
-        this.equipe = data;
+        console.log('✅ Equipe carregada:', data);
+        this.equipe = data || [];
         this.loading = false;
       },
       error: (err) => {
@@ -48,12 +56,23 @@ export class Equip implements OnInit {
     });
   }
 
+  // ==========================================================
+  // 🗑️ REMOVER POKÉMON DA EQUIPE
+  // ==========================================================
   removeFromTeam(pokemonId: number): void {
     const headers = this.getAuthHeaders();
+    const id = pokemonId || 0;
 
-    this.http.delete(`${this.apiUrl}/api/equipe/${pokemonId}`, { headers }).subscribe({
+    if (!id) {
+      console.warn('⚠️ ID do Pokémon inválido para remoção.');
+      return;
+    }
+
+    this.http.delete(`${this.apiUrl}/api/equipe/${id}`, { headers }).subscribe({
       next: () => {
-        this.equipe = this.equipe.filter(p => p.pokemon_id !== pokemonId);
+        console.log('🗑️ Pokémon removido da equipe:', id);
+        this.equipe = this.equipe.filter(p => p.pokemon_id !== id && p.id !== id);
+        this.equipe = [...this.equipe]; // força re-renderização
         this.message = 'Pokémon removido da equipe!';
       },
       error: (err) => {
@@ -63,6 +82,9 @@ export class Equip implements OnInit {
     });
   }
 
+  // ==========================================================
+  // 🔍 MODAL DE DETALHES
+  // ==========================================================
   viewDetails(pokemon: any): void {
     this.selectedPokemon = pokemon;
     this.showModal = true;
@@ -70,8 +92,12 @@ export class Equip implements OnInit {
 
   closeModal(): void {
     this.showModal = false;
+    this.selectedPokemon = null;
   }
 
+  // ==========================================================
+  // 🎨 COR DOS TIPOS
+  // ==========================================================
   getTypeColor(type: string, filled: boolean): string {
     const colors: any = {
       fire: 'bg-red-500', water: 'bg-blue-500', grass: 'bg-green-500',

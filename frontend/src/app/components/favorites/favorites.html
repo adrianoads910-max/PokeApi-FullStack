@@ -40,19 +40,19 @@
             src="assets/images/star-on.png"
             alt="Remover dos favoritos"
             class="absolute top-2 right-2 w-6 h-6 cursor-pointer hover:scale-110 transition z-20"
-            (click)="$event.stopPropagation(); removeFavorite(pokemon.pokemon_id)">
+            (click)="$event.stopPropagation(); removeFavorite(pokemon.id || pokemon.pokemon_id)">
 
           <!-- Sprite -->
-          <img [src]="pokemon.pokemon_image"
-               [alt]="pokemon.pokemon_name"
+          <img [src]="pokemon.sprite_url"
+               [alt]="pokemon.name"
                class="h-full object-contain relative z-10"
                onerror="this.onerror=null; this.src='https://placehold.co/128x128/f3f4f6/374151?text=?'">
         </div>
 
         <!-- Informações -->
         <div class="p-3 bg-slate-300">
-          <p class="text-xs font-light text-gray-500">#{{ pokemon.pokemon_id | number: '3.0' }}</p>
-          <h3 class="text-lg font-bold text-gray-800 mb-2 truncate">{{ pokemon.pokemon_name }}</h3>
+          <p class="text-xs font-light text-gray-500">#{{ pokemon.id || pokemon.pokemon_id | number: '3.0' }}</p>
+          <h3 class="text-lg font-bold text-gray-800 mb-2 truncate">{{ pokemon.name || pokemon.pokemon_name }}</h3>
           <div class="flex flex-wrap gap-1">
             <span *ngFor="let type of pokemon.types"
                   [class]="getTypeColor(type.toLowerCase(), true)"
@@ -87,10 +87,10 @@
       <!-- Conteúdo do modal -->
       <div *ngIf="selectedPokemon" class="p-6">
         <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">
-          {{ selectedPokemon.pokemon_name }}
+          {{ selectedPokemon.name || selectedPokemon.pokemon_name }}
         </h2>
-        <img [src]="selectedPokemon.pokemon_image" 
-             alt="{{ selectedPokemon.pokemon_name }}" 
+        <img [src]="selectedPokemon.sprite_url"
+             [alt]="selectedPokemon.name || selectedPokemon.pokemon_name"
              class="mx-auto h-40 mb-4">
         <div class="flex flex-wrap justify-center gap-2">
           <span *ngFor="let type of selectedPokemon.types"

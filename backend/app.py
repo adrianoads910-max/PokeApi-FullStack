@@ -282,6 +282,10 @@ def get_pokemon_data(name_or_id):
 from favorites import favorites_bp
 app.register_blueprint(favorites_bp)
 
+from equip import equip_bp
+app.register_blueprint(equip_bp)
+
+
 # ==============================================
 # 6) Execução do App
 # ==============================================
