@@ -24,15 +24,17 @@ app.config.setdefault("JWT_HEADER_TYPE", "Bearer")
 app.config.setdefault("JWT_ERROR_MESSAGE_KEY", "message")
 
 # 🌐 CORS (Angular em localhost e 127.0.0.1)
-CORS(
-    app,
-    resources={r"/*": {
-        "origins": ["http://localhost:4200", "http://127.0.0.1:4200", "https://adrianoads910-max.github.io"],
-        "allow_headers": ["Content-Type", "Authorization"],
-        "supports_credentials": True,
-        "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"]
-    }},
-)
+
+CORS(app, resources={r"/*": {
+    "origins": ["http://localhost:4200", 
+                "http://127.0.0.1:4200",
+                "https://adrianoads910-max.github.io",
+                "https://pokeapi-fullstack.onrender.com"],
+    "allow_headers": ["Content-Type", "Authorization"],
+    "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    "supports_credentials": True
+}})
+
 
 # DB + JWT
 db.init_app(app)
