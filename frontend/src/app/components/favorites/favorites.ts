@@ -18,12 +18,19 @@ export class Favorites implements OnInit {
   selectedPokemon: any = null;
   showModal = false;
   message = '';
+  loadingDetails = false; // 🆕 controla o carregamento do modal
 
   constructor(private http: HttpClient, private router: Router) {}
 
   ngOnInit(): void {
     this.loadFavorites();
   }
+// Calcula a largura da barra de status base
+getStatWidth(value: number): number {
+  // valor máximo aproximado de stats em Pokémon
+  const maxStat = 255;
+  return Math.min(100, Math.round((value / maxStat) * 100));
+}
 
   // ==========================================================
   // 🔐 AUTH HEADER
@@ -81,11 +88,26 @@ export class Favorites implements OnInit {
   }
 
   // ==========================================================
-  // 🔍 VER DETALHES DO POKÉMON
+  // 🔍 VER DETALHES DO POKÉMON (AJUSTADO)
   // ==========================================================
   viewDetails(pokemon: any): void {
-    this.selectedPokemon = pokemon;
+    const id = pokemon.pokemon_id || pokemon.id;
+    if (!id) return;
+
+    this.loadingDetails = true;
     this.showModal = true;
+    this.selectedPokemon = null;
+
+    this.http.get(`${this.apiUrl}/pokemon/search/${id}`).subscribe({
+      next: (data: any) => {
+        this.selectedPokemon = data;
+        this.loadingDetails = false;
+      },
+      error: (err) => {
+        console.error('❌ Erro ao carregar detalhes:', err);
+        this.loadingDetails = false;
+      }
+    });
   }
 
   closeModal(): void {
@@ -105,8 +127,7 @@ export class Favorites implements OnInit {
       fighting: 'bg-orange-600', dragon: 'bg-indigo-700', dark: 'bg-gray-800',
       steel: 'bg-gray-500', ghost: 'bg-violet-700', flying: 'bg-sky-400'
     };
-    const color = colors[type?.toLowerCase()] || 'bg-gray-300';
-    return color; // cor sólida, sem opacidade
+    return colors[type?.toLowerCase()] || 'bg-gray-300';
   }
 
   // ==========================================================

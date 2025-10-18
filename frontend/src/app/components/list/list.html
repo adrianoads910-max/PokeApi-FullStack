@@ -216,10 +216,16 @@
       <!-- Detalhes -->
       <div *ngIf="selectedPokemon && !loadingDetails" class="relative flex flex-col sm:flex-row z-10">
         <!-- Esquerda -->
-        <div 
+           <!-- 🔴 Fundo Pokébola -->
+          <div 
+            class="absolute inset-0 bg-center bg-no-repeat bg-contain opacity-5 brightness-150"
+            style="background-image: url('assets/images/pokeball.png');">
+          </div>
+                <div 
           class="sm:w-1/2 flex flex-col items-center justify-center p-6 text-center"
           [ngClass]="getTypeColor(selectedPokemon.types[0], false)">
-          <div class="bg-white/70 rounded-2xl p-4 shadow-inner w-48 h-48 flex items-center justify-center relative">
+          <div class="bg-white/70 rounded-2xl p-4 shadow-inner w-64 h-64 flex items-center justify-center relative">
+            
             <img [src]="selectedPokemon.sprite_url" [alt]="selectedPokemon.name" class="object-contain w-full h-full drop-shadow-md">
           </div>
           <h2 class="mt-4 text-3xl font-extrabold text-gray-900 capitalize tracking-wide">{{ selectedPokemon.name }}</h2>

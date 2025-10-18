@@ -29,11 +29,12 @@ def get_favorites():
     favorites = Favorite.query.filter_by(user_id=user.id).all()
 
     results = []
+    results = []
     for f in favorites:
         results.append({
             "id": f.pokemon_id,
-            "name": f.pokemon_name,
-            "sprite_url": f.pokemon_image or "",
+            "name": f.pokemon_name,               # 🔧 padronizado
+            "sprite_url": f.pokemon_image or "",  # 🔧 compatível com frontend
             "height": f.height or 0,
             "weight": f.weight or 0,
             "abilities": json.loads(f.abilities or "[]"),

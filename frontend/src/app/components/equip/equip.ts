@@ -7,7 +7,7 @@ import { FormsModule } from '@angular/forms';
 @Component({
   selector: 'app-equip',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule,],
   templateUrl: './equip.html',
   styleUrls: ['./equip.css']
 })
@@ -18,12 +18,17 @@ export class Equip implements OnInit {
   selectedPokemon: any = null;
   showModal = false;
   message = '';
+  loadingDetails = false; // 🆕 controle do modal
 
   constructor(private http: HttpClient, private router: Router) {}
 
   ngOnInit(): void {
     this.loadEquipe();
   }
+getStatWidth(value: number): number {
+  const maxStat = 255;
+  return Math.min(100, Math.round((value / maxStat) * 100));
+}
 
   // ==========================================================
   // 🔐 AUTH HEADER
@@ -83,11 +88,26 @@ export class Equip implements OnInit {
   }
 
   // ==========================================================
-  // 🔍 MODAL DE DETALHES
+  // 🔍 MODAL DE DETALHES (AJUSTADO)
   // ==========================================================
   viewDetails(pokemon: any): void {
-    this.selectedPokemon = pokemon;
+    const id = pokemon.pokemon_id || pokemon.id;
+    if (!id) return;
+
+    this.loadingDetails = true;
     this.showModal = true;
+    this.selectedPokemon = null;
+
+    this.http.get(`${this.apiUrl}/pokemon/search/${id}`).subscribe({
+      next: (data: any) => {
+        this.selectedPokemon = data;
+        this.loadingDetails = false;
+      },
+      error: (err) => {
+        console.error('❌ Erro ao carregar detalhes:', err);
+        this.loadingDetails = false;
+      }
+    });
   }
 
   closeModal(): void {

@@ -26,8 +26,8 @@ def get_equip():
     for f in equip:
         results.append({
             "id": f.pokemon_id,
-            "name": f.pokemon_name,
-            "sprite_url": f.pokemon_image or "",
+            "name": f.pokemon_name,               # 🔧 padronizado
+            "sprite_url": f.pokemon_image or "",  # 🔧 compatível com frontend
             "height": f.height or 0,
             "weight": f.weight or 0,
             "abilities": json.loads(f.abilities or "[]"),
@@ -36,6 +36,7 @@ def get_equip():
         })
 
     return jsonify(results), 200
+
 
 # POST /api/equipe/
 @equip_bp.route("/", methods=["POST", "OPTIONS"])
