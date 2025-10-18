@@ -75,10 +75,16 @@ def add_to_equipe():
     if not pokemon_id or not pokemon_name:
         return jsonify({"msg": "Nome e ID do Pokémon são obrigatórios"}), 400
 
+    # ✅ verifica se já tem 6 Pokémon
+    equipe_atual = Equip.query.filter_by(user_id=user.id).count()
+    if equipe_atual >= 6:
+    # Limite de 6
+        if Equip.query.filter_by(user_id=user.id).count() >= 6:
+         return jsonify({"msg": "Você já possui 6 Pokémon na sua equipe. Remova um antes de adicionar outro."}), 400
     # Evita duplicidade
     if Equip.query.filter_by(user_id=user.id, pokemon_id=pokemon_id).first():
         return jsonify({"msg": "Pokémon já está na equipe"}), 400
-
+    
     try:
         equip = Equip(
             user_id=user.id,

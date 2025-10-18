@@ -220,26 +220,20 @@ def get_users():
 # ==============================================
 @app.route("/pokemon/filter", methods=["GET"])
 def filter_pokemon():
-    """
-    Filtra Pokémon por geração e/ou tipo.
-    Se nenhum filtro for enviado, retorna a Geração 1 completa por padrão.
-    """
     generation_id = request.args.get("generation")
     type_name = request.args.get("type")
-
-    base_url = None
     results = []
 
     try:
-        # ✅ Caso não tenha filtros, retorna todos os Pokémons da geração 1
+        # ✅ Caso nenhum filtro seja enviado → retorna os primeiros 50 Pokémon
         if not generation_id and not type_name:
-            base_url = "https://pokeapi.co/api/v2/pokemon?limit=151&offset=0"
-            response = requests.get(base_url)
+            base_url = "https://pokeapi.co/api/v2/pokemon?limit=50&offset=0"
+            response = requests.get(base_url, timeout=5)
             response.raise_for_status()
             data = response.json()
 
             for entry in data.get("results", []):
-                poke_response = requests.get(entry["url"])
+                poke_response = requests.get(entry["url"], timeout=5)
                 if poke_response.ok:
                     poke_data = poke_response.json()
                     results.append({
@@ -251,16 +245,16 @@ def filter_pokemon():
 
             return jsonify({"results": results, "count": len(results)}), 200
 
-        # ✅ Se apenas a geração for informada
+        # ✅ Apenas geração
         if generation_id and not type_name:
-            base_url = f"https://pokeapi.co/api/v2/generation/{generation_id}"
-            response = requests.get(base_url)
+            gen_url = f"https://pokeapi.co/api/v2/generation/{generation_id}"
+            response = requests.get(gen_url, timeout=5)
             response.raise_for_status()
             data = response.json()
 
             for species in data.get("pokemon_species", []):
                 species_name = species["name"]
-                poke_response = requests.get(f"https://pokeapi.co/api/v2/pokemon/{species_name}")
+                poke_response = requests.get(f"https://pokeapi.co/api/v2/pokemon/{species_name}", timeout=5)
                 if poke_response.ok:
                     poke_data = poke_response.json()
                     results.append({
@@ -272,15 +266,15 @@ def filter_pokemon():
 
             return jsonify({"results": results, "count": len(results)}), 200
 
-        # ✅ Se apenas o tipo for informado
+        # ✅ Apenas tipo
         if type_name and not generation_id:
-            base_url = f"https://pokeapi.co/api/v2/type/{type_name.lower()}"
-            response = requests.get(base_url)
+            type_url = f"https://pokeapi.co/api/v2/type/{type_name.lower()}"
+            response = requests.get(type_url, timeout=5)
             response.raise_for_status()
             data = response.json()
 
             for poke in data.get("pokemon", []):
-                poke_response = requests.get(poke["pokemon"]["url"])
+                poke_response = requests.get(poke["pokemon"]["url"], timeout=5)
                 if poke_response.ok:
                     poke_data = poke_response.json()
                     results.append({
@@ -292,22 +286,19 @@ def filter_pokemon():
 
             return jsonify({"results": results, "count": len(results)}), 200
 
-        # ✅ Se ambos os filtros forem informados
+        # ✅ Geração + Tipo
         if generation_id and type_name:
             gen_url = f"https://pokeapi.co/api/v2/generation/{generation_id}"
             type_url = f"https://pokeapi.co/api/v2/type/{type_name.lower()}"
 
-            gen_data = requests.get(gen_url).json()
-            type_data = requests.get(type_url).json()
+            gen_data = requests.get(gen_url, timeout=5).json()
+            type_data = requests.get(type_url, timeout=5).json()
 
             gen_species = {p["name"] for p in gen_data.get("pokemon_species", [])}
-            filtered_pokemons = [
-                p["pokemon"] for p in type_data.get("pokemon", [])
-                if p["pokemon"]["name"] in gen_species
-            ]
+            filtered = [p["pokemon"] for p in type_data.get("pokemon", []) if p["pokemon"]["name"] in gen_species]
 
-            for poke in filtered_pokemons:
-                poke_response = requests.get(poke["url"])
+            for poke in filtered:
+                poke_response = requests.get(poke["url"], timeout=5)
                 if poke_response.ok:
                     poke_data = poke_response.json()
                     results.append({
@@ -319,9 +310,8 @@ def filter_pokemon():
 
             return jsonify({"results": results, "count": len(results)}), 200
 
-    except requests.exceptions.RequestException as e:
-        print(f"Erro na requisição externa: {e}")
-        return jsonify({"msg": "Erro de rede ao buscar dados da PokéAPI."}), 503
+    except requests.exceptions.Timeout:
+        return jsonify({"msg": "PokéAPI demorou demais para responder. Tente novamente."}), 504
 
     except Exception as e:
         print(f"Erro inesperado: {e}")

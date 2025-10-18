@@ -13,6 +13,9 @@ import { API_URL } from '../../api';
   styleUrls: ['./list.css']
 })
 export class List implements OnInit {
+  // ==========================================================
+  // 🔧 VARIÁVEIS PRINCIPAIS
+  // ==========================================================
   showModal = false;
   selectedPokemon: any = null;
   loadingDetails = false;
@@ -46,22 +49,30 @@ export class List implements OnInit {
   favorites: any[] = [];
   equipe: any[] = [];
 
-  //private apiUrl = 'http://127.0.0.1:5000';
-  
+  activeCategory: 'todos' | 'favoritos' | 'equipe' = 'todos';
+
   constructor(private http: HttpClient, private router: Router) {}
 
+  // ==========================================================
+  // 🚀 AO INICIAR A TELA
+  // ==========================================================
   ngOnInit(): void {
     this.generation = '1';
-    this.searchPokemon();
-    this.loadFavorites();
-    this.loadEquipe();
+    this.type = '';
+    this.manualSearchTerm = '';
+    this.message = 'Carregando Pokémons da Geração 1...';
+
+    // Atraso leve para garantir que Angular inicialize tudo
+    setTimeout(() => {
+      this.searchPokemon(true);
+      this.loadFavorites();
+      this.loadEquipe();
+    }, 300);
   }
 
   // ==========================================================
   // 🔍 BUSCA E FILTROS
   // ==========================================================
-  activeCategory: 'todos' | 'favoritos' | 'equipe' = 'todos';
-
   searchManual(): void {
     const term = this.manualSearchTerm.trim().toLowerCase();
     if (!term) {
@@ -86,17 +97,26 @@ export class List implements OnInit {
     });
   }
 
-  searchPokemon(): void {
+  // ==========================================================
+  // 🔍 BUSCA GERAL COM FILTROS
+  // ==========================================================
+  searchPokemon(initialLoad = false): void {
     this.loading = true;
     const params: any = {};
-    if (this.generation) params['generation'] = this.generation;
-    if (this.type) params['type'] = this.type.toLowerCase();
+
+    // Se não houver filtro, força geração 1
+    if (!this.generation && !this.type) {
+      params['generation'] = '1';
+    } else {
+      if (this.generation) params['generation'] = this.generation;
+      if (this.type) params['type'] = this.type.toLowerCase();
+    }
 
     this.http.get(`${API_URL}/pokemon/filter`, { params }).subscribe({
       next: (response: any) => {
         this.pokemons = response.results || [];
 
-        // Ordenar: Equipe → Favoritos → Restantes
+        // Ordena equipe e favoritos no topo
         this.pokemons.sort((a, b) => {
           const aEquipe = this.isEquip(a.id) ? 1 : 0;
           const bEquipe = this.isEquip(b.id) ? 1 : 0;
@@ -107,47 +127,75 @@ export class List implements OnInit {
 
         this.totalCount = this.pokemons.length;
         this.loading = false;
+
+        if (initialLoad) {
+          this.message = `Pokémons da Geração 1 carregados (${this.totalCount})`;
+        } else {
+          this.message = this.totalCount
+            ? ''
+            : 'Nenhum Pokémon encontrado.';
+        }
       },
-      error: () => {
+      error: (err) => {
+        console.error('❌ Erro ao carregar Pokémons:', err);
         this.pokemons = [];
         this.totalCount = 0;
         this.loading = false;
+        this.message = 'Erro ao carregar Pokémons.';
       }
     });
   }
 
+  // ==========================================================
+  // 🧭 CATEGORIAS (TODOS / FAVORITOS / EQUIPE)
+  // ==========================================================
+  filterByCategory(category: 'todos' | 'favoritos' | 'equipe'): void {
+    this.activeCategory = category;
+
+    if (category === 'favoritos') {
+      this.message = 'Exibindo apenas seus Pokémon favoritos.';
+      this.pokemons = [...this.favorites];
+      this.totalCount = this.pokemons.length;
+      return;
+    }
+
+    if (category === 'equipe') {
+      this.message = 'Exibindo sua equipe.';
+      this.pokemons = [...this.equipe];
+      this.totalCount = this.pokemons.length;
+      return;
+    }
+
+    // Categoria "Todos" → limpa filtros e recarrega
+    this.generation = '';
+    this.type = '';
+    this.manualSearchTerm = '';
+    this.message = 'Carregando todos os Pokémons...';
+    this.searchPokemon();
+  }
+
+  // ==========================================================
+  // 🎚️ FILTROS POR GERAÇÃO / TIPO
+  // ==========================================================
   selectGeneration(selectedGenId: string): void {
     this.generation = this.generation === selectedGenId ? '' : selectedGenId;
+    this.activeCategory = 'todos';
     this.searchPokemon();
   }
 
   selectType(selectedType: string): void {
     this.type = this.type === selectedType ? '' : selectedType;
+    this.activeCategory = 'todos';
     this.searchPokemon();
   }
 
   clearFilters(): void {
-    this.generation = '';
-    this.type = '';
-    this.manualSearchTerm = '';
-    this.searchPokemon();
-  }
+  this.generation = '1';  // sempre comece na gen 1
+  this.type = '';
+  this.manualSearchTerm = '';
+  this.searchPokemon();
+}
 
-  filterByCategory(category: 'todos' | 'favoritos' | 'equipe'): void {
-    this.activeCategory = category;
-
-    if (category === 'favoritos') {
-      this.pokemons = [...this.favorites];
-      this.totalCount = this.pokemons.length;
-      this.message = 'Exibindo apenas seus Pokémon favoritos.';
-    } else if (category === 'equipe') {
-      this.pokemons = [...this.equipe];
-      this.totalCount = this.pokemons.length;
-      this.message = 'Exibindo sua equipe.';
-    } else {
-      this.searchPokemon();
-    }
-  }
 
   getFilterStyle(isSelected: boolean): string {
     return isSelected
@@ -241,7 +289,7 @@ export class List implements OnInit {
       this.http.post(`${API_URL}/api/equipe/`, payload, { headers }).subscribe({
         next: () => this.equipe.push(payload),
         error: (err) => {
-          if (err.status === 400 && err.error.msg.includes('6 Pokémon')) {
+          if (err.status === 400 && err.error.msg?.includes('6 Pokémon')) {
             alert('⚠️ Sua equipe já possui 6 Pokémon!');
           } else {
             console.error('Erro ao adicionar à equipe:', err);
