@@ -31,7 +31,7 @@ export class Users implements OnInit {
       next: (data) => {
         this.usuarios = data;
         this.loading = false;
-        console.log('✅ Usuários carregados com sucesso:', data);
+        console.log('✅ Usuários carregados com sucesso:')//, data);
       },
       error: (err) => {
         this.loading = false;

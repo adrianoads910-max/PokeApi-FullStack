@@ -30,15 +30,15 @@ export class Login {
       return;
     }
 
-    console.log('📤 Enviando login:', {
-      email: this.email,
-      password: this.password
-    });
+   // console.log('📤 Enviando login:', {
+   //   email: this.email,
+   //   password: this.password
+   // });
 
     // 🔧 Chamada compatível com AuthService.login(email, password)
     this.authService.login(this.email, this.password).subscribe({
       next: (response: any) => {
-        console.log('📥 Resposta do backend:', response);
+        //console.log('📥 Resposta do backend:', response);
 
         // ✅ Detecta token em qualquer formato
         const token =
@@ -47,7 +47,7 @@ export class Login {
           response?.data?.token ||
           null;
 
-        console.log('🔍 Token detectado:', token);
+        //console.log('🔍 Token detectado:', token);
 
         if (token) {
           // Salva token e usuário no localStorage
