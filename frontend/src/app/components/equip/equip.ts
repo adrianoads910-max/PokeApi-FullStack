@@ -3,32 +3,33 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { API_URL } from '../../api';
 
 @Component({
   selector: 'app-equip',
   standalone: true,
-  imports: [CommonModule, FormsModule,],
+  imports: [CommonModule, FormsModule],
   templateUrl: './equip.html',
   styleUrls: ['./equip.css']
 })
 export class Equip implements OnInit {
-  apiUrl = 'http://localhost:5000';
   equipe: any[] = [];
   loading = false;
   selectedPokemon: any = null;
   showModal = false;
   message = '';
-  loadingDetails = false; // 🆕 controle do modal
+  loadingDetails = false;
 
   constructor(private http: HttpClient, private router: Router) {}
 
   ngOnInit(): void {
     this.loadEquipe();
   }
-getStatWidth(value: number): number {
-  const maxStat = 255;
-  return Math.min(100, Math.round((value / maxStat) * 100));
-}
+
+  getStatWidth(value: number): number {
+    const maxStat = 255;
+    return Math.min(100, Math.round((value / maxStat) * 100));
+  }
 
   // ==========================================================
   // 🔐 AUTH HEADER
@@ -48,7 +49,7 @@ getStatWidth(value: number): number {
     this.loading = true;
     const headers = this.getAuthHeaders();
 
-    this.http.get<any[]>(`${this.apiUrl}/api/equipe/`, { headers }).subscribe({
+    this.http.get<any[]>(`${API_URL}/api/equipe/`, { headers }).subscribe({
       next: (data) => {
         console.log('✅ Equipe carregada:', data);
         this.equipe = data || [];
@@ -73,11 +74,10 @@ getStatWidth(value: number): number {
       return;
     }
 
-    this.http.delete(`${this.apiUrl}/api/equipe/${id}`, { headers }).subscribe({
+    this.http.delete(`${API_URL}/api/equipe/${id}`, { headers }).subscribe({
       next: () => {
         console.log('🗑️ Pokémon removido da equipe:', id);
         this.equipe = this.equipe.filter(p => p.pokemon_id !== id && p.id !== id);
-        this.equipe = [...this.equipe]; // força re-renderização
         this.message = 'Pokémon removido da equipe!';
       },
       error: (err) => {
@@ -88,7 +88,7 @@ getStatWidth(value: number): number {
   }
 
   // ==========================================================
-  // 🔍 MODAL DE DETALHES (AJUSTADO)
+  // 🔍 MODAL DE DETALHES
   // ==========================================================
   viewDetails(pokemon: any): void {
     const id = pokemon.pokemon_id || pokemon.id;
@@ -98,7 +98,7 @@ getStatWidth(value: number): number {
     this.showModal = true;
     this.selectedPokemon = null;
 
-    this.http.get(`${this.apiUrl}/pokemon/search/${id}`).subscribe({
+    this.http.get(`${API_URL}/pokemon/search/${id}`).subscribe({
       next: (data: any) => {
         this.selectedPokemon = data;
         this.loadingDetails = false;
@@ -116,7 +116,7 @@ getStatWidth(value: number): number {
   }
 
   // ==========================================================
-  // 🎨 COR DOS TIPOS
+  // 🎨 COR DOS TIPOS (sem alterações)
   // ==========================================================
   getTypeColor(type: string, filled: boolean): string {
     const colors: any = {

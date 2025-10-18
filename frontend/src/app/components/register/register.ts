@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { API_URL } from '../../api';
 
 @Component({
   selector: 'app-register',
@@ -19,7 +20,8 @@ export class Register {
   confirmPassword = '';
   message = '';
 
-  private apiUrl = 'http://127.0.0.1:5000'; // Flask backend
+  //private apiUrl = 'http://127.0.0.1:5000'; // Flask backend
+  private API_URL = 'https://pokeapi-fullstack.onrender.com';
 
   constructor(private http: HttpClient, private router: Router) {}
 
@@ -37,7 +39,7 @@ export class Register {
       confirmPassword: this.confirmPassword
     };
 
-    this.http.post(`${this.apiUrl}/register`, data).subscribe({
+    this.http.post(`${API_URL}/register`, data).subscribe({
       next: (res: any) => {
         this.message = res.msg || 'Cadastro realizado com sucesso!';
         this.clearForm();

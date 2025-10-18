@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { API_URL } from '../../api';
 
 @Component({
   selector: 'app-favorites',
@@ -12,7 +13,6 @@ import { FormsModule } from '@angular/forms';
   styleUrls: ['./favorites.css']
 })
 export class Favorites implements OnInit {
-  apiUrl = 'http://localhost:5000';
   favorites: any[] = [];
   loading = false;
   selectedPokemon: any = null;
@@ -50,7 +50,7 @@ getStatWidth(value: number): number {
     this.loading = true;
     const headers = this.getAuthHeaders();
 
-    this.http.get<any[]>(`${this.apiUrl}/api/favorites/`, { headers }).subscribe({
+    this.http.get<any[]>(`${API_URL}/api/favorites/`, { headers }).subscribe({
       next: (data) => {
         console.log('✅ Favoritos carregados:', data);
         this.favorites = data || [];
@@ -75,7 +75,7 @@ getStatWidth(value: number): number {
       return;
     }
 
-    this.http.delete(`${this.apiUrl}/api/favorites/${id}`, { headers }).subscribe({
+    this.http.delete(`${API_URL}/api/favorites/${id}`, { headers }).subscribe({
       next: () => {
         console.log('🗑️ Removido dos favoritos:', id);
         this.favorites = this.favorites.filter(f => f.pokemon_id !== id && f.id !== id);
@@ -98,7 +98,7 @@ getStatWidth(value: number): number {
     this.showModal = true;
     this.selectedPokemon = null;
 
-    this.http.get(`${this.apiUrl}/pokemon/search/${id}`).subscribe({
+    this.http.get(`${API_URL}/pokemon/search/${id}`).subscribe({
       next: (data: any) => {
         this.selectedPokemon = data;
         this.loadingDetails = false;

@@ -3,6 +3,7 @@ import { HttpClient, HttpClientModule, HttpHeaders } from '@angular/common/http'
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { API_URL } from '../../api';
 
 @Component({
   selector: 'app-pokemon-list',
@@ -45,8 +46,8 @@ export class List implements OnInit {
   favorites: any[] = [];
   equipe: any[] = [];
 
-  private apiUrl = 'http://127.0.0.1:5000';
-
+  //private apiUrl = 'http://127.0.0.1:5000';
+  private API_URL = 'https://pokeapi-fullstack.onrender.com'; ;
   constructor(private http: HttpClient, private router: Router) {}
 
   ngOnInit(): void {
@@ -69,7 +70,7 @@ export class List implements OnInit {
     }
 
     this.loading = true;
-    this.http.get(`${this.apiUrl}/pokemon/search/${term}`).subscribe({
+    this.http.get(`${API_URL}/pokemon/search/${term}`).subscribe({
       next: (response: any) => {
         this.pokemons = [response];
         this.totalCount = 1;
@@ -91,7 +92,7 @@ export class List implements OnInit {
     if (this.generation) params['generation'] = this.generation;
     if (this.type) params['type'] = this.type.toLowerCase();
 
-    this.http.get(`${this.apiUrl}/pokemon/filter`, { params }).subscribe({
+    this.http.get(`${API_URL}/pokemon/filter`, { params }).subscribe({
       next: (response: any) => {
         this.pokemons = response.results || [];
 
@@ -167,7 +168,7 @@ export class List implements OnInit {
 
   loadFavorites(): void {
     const headers = this.getAuthHeaders();
-    this.http.get(`${this.apiUrl}/api/favorites/`, { headers }).subscribe({
+    this.http.get(`${API_URL}/api/favorites/`, { headers }).subscribe({
       next: (data: any) => this.favorites = data,
       error: (err: any) => console.error('Erro ao carregar favoritos:', err)
     });
@@ -181,7 +182,7 @@ export class List implements OnInit {
     const headers = this.getAuthHeaders();
 
     if (this.isFavorite(pokemon.id)) {
-      this.http.delete(`${this.apiUrl}/api/favorites/${pokemon.id}`, { headers }).subscribe({
+      this.http.delete(`${API_URL}/api/favorites/${pokemon.id}`, { headers }).subscribe({
         next: () => this.favorites = this.favorites.filter(f => f.id !== pokemon.id),
         error: (err) => console.error('Erro ao remover favorito:', err)
       });
@@ -196,7 +197,7 @@ export class List implements OnInit {
         stats: pokemon.stats,
         types: pokemon.types
       };
-      this.http.post(`${this.apiUrl}/api/favorites/`, payload, { headers }).subscribe({
+      this.http.post(`${API_URL}/api/favorites/`, payload, { headers }).subscribe({
         next: () => this.favorites.push(payload),
         error: (err) => console.error('Erro ao adicionar favorito:', err)
       });
@@ -208,7 +209,7 @@ export class List implements OnInit {
   // ==========================================================
   loadEquipe(): void {
     const headers = this.getAuthHeaders();
-    this.http.get(`${this.apiUrl}/api/equipe/`, { headers }).subscribe({
+    this.http.get(`${API_URL}/api/equipe/`, { headers }).subscribe({
       next: (data: any) => this.equipe = data,
       error: (err) => console.error('Erro ao carregar equipe:', err)
     });
@@ -222,7 +223,7 @@ export class List implements OnInit {
     const headers = this.getAuthHeaders();
 
     if (this.isEquip(pokemon.id)) {
-      this.http.delete(`${this.apiUrl}/api/equipe/${pokemon.id}`, { headers }).subscribe({
+      this.http.delete(`${API_URL}/api/equipe/${pokemon.id}`, { headers }).subscribe({
         next: () => this.equipe = this.equipe.filter(e => e.id !== pokemon.id),
         error: (err) => console.error('Erro ao remover da equipe:', err)
       });
@@ -237,7 +238,7 @@ export class List implements OnInit {
         stats: pokemon.stats,
         types: pokemon.types
       };
-      this.http.post(`${this.apiUrl}/api/equipe/`, payload, { headers }).subscribe({
+      this.http.post(`${API_URL}/api/equipe/`, payload, { headers }).subscribe({
         next: () => this.equipe.push(payload),
         error: (err) => {
           if (err.status === 400 && err.error.msg.includes('6 Pokémon')) {
@@ -262,7 +263,7 @@ export class List implements OnInit {
     this.showModal = true;
     this.selectedPokemon = null;
 
-    this.http.get(`${this.apiUrl}/pokemon/search/${pokemonId}`).subscribe({
+    this.http.get(`${API_URL}/pokemon/search/${pokemonId}`).subscribe({
       next: (data: any) => {
         this.selectedPokemon = data;
         this.loadingDetails = false;

@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
+import { API_URL } from '../../api';
 
 @Component({
   selector: 'app-users',
@@ -15,7 +16,8 @@ export class Users implements OnInit {
   errorMsg = '';
 
   // ✅ Base URL do backend Flask
-  private apiUrl = 'http://127.0.0.1:5000';
+  //private apiUrl = 'http://127.0.0.1:5000';
+  private API_URL = 'https://pokeapi-fullstack.onrender.com'; 
 
   constructor(private http: HttpClient) {}
 
@@ -25,9 +27,9 @@ export class Users implements OnInit {
 
   // 🔁 Busca os usuários da API Flask
   loadUsuarios(): void {
-    console.log('📡 Buscando usuários em', `${this.apiUrl}/api/users`);
+    console.log('📡 Buscando usuários em', `${API_URL}/api/users`);
 
-    this.http.get<any[]>(`${this.apiUrl}/api/users`).subscribe({
+    this.http.get<any[]>(`${this.API_URL}/api/users`).subscribe({
       next: (data) => {
         this.usuarios = data;
         this.loading = false;
