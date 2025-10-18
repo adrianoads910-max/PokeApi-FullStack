@@ -121,8 +121,8 @@
 
             <!-- Ícone da Pokébola -->
             <img 
-                src="assets/images/pokeball-icon.png"
-                alt="Pokeball icon"
+                [src]="isEquip(pokemon.id) ? 'assets/images/game.png': 'assets/images/pokeball-icon.png' "
+                alt="Equipe"
                 class="absolute top-2 left-2 w-6 h-6 opacity-90 hover:scale-110 transition z-20"
                 (click)="$event.stopPropagation(); onPokeballClick(pokemon)"
             >

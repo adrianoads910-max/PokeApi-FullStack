@@ -3,7 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import db, Favorite, User, Equip
 import json
 
-equip_bp = Blueprint('equipe', __name__, url_prefix="/api/equipe")
+equip_bp = Blueprint('equipe', __name__, url_prefix="/api/equipe/")
 
 
 # ==========================================
