@@ -1,0 +1,46 @@
+<div class="users-container">
+  <h2 class="page-title">👥 Gestão de Usuários</h2>
+
+  <!-- LOADING -->
+  <div *ngIf="loading" class="loading">
+    <p>⏳ Carregando usuários...</p>
+  </div>
+
+  <!-- ERRO -->
+  <div *ngIf="!loading && errorMsg" class="error">
+    <p>{{ errorMsg }}</p>
+  </div>
+
+  <!-- LISTA DE USUÁRIOS -->
+  <div *ngIf="!loading && !errorMsg && usuarios.length > 0" class="users-list">
+    <table class="users-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nome</th>
+          <th>Apelido</th>
+          <th>Email</th>
+          <th>Admin</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let u of usuarios">
+          <td>{{ u.id }}</td>
+          <td>{{ u.name }}</td>
+          <td>{{ u.nickname }}</td>
+          <td>{{ u.email }}</td>
+          <td>
+            <span [class.admin]="u.is_admin" [class.normal]="!u.is_admin">
+              {{ u.is_admin ? "✅ Sim" : "❌ Não" }}
+            </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- NENHUM USUÁRIO -->
+  <div *ngIf="!loading && !errorMsg && usuarios.length === 0" class="empty">
+    <p>📭 Nenhum usuário encontrado.</p>
+  </div>
+</div>

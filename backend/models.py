@@ -11,6 +11,7 @@ class User(db.Model):
     password = db.Column(db.String(200), nullable=False)
     favorites = db.relationship('Favorite', backref='user', lazy=True)
     equip = db.relationship('Equip', backref='user', lazy=True)
+    is_admin = db.Column(db.Boolean, default=False)
 
     def to_dict(self):
         return {

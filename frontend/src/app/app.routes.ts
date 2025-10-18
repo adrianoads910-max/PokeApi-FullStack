@@ -8,6 +8,7 @@ import { List } from './components/list/list';
 import { Register } from './components/register/register';
 import { AuthGuard } from './guards/auth-guard';
 import { UserProfile } from './components/user-profile/user-profile';
+import { Users } from './components/users/users';
 
 
 
@@ -45,6 +46,10 @@ export const routes: Routes = [
         path: "profile",
         component: UserProfile
 
-    }
+    },
+    {
+        path: "users",
+        component: Users, canActivate: [AuthGuard]
+    },
 
 ];

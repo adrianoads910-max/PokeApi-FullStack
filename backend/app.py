@@ -1,21 +1,40 @@
+# app.py
 from flask import Flask, request, jsonify, Blueprint
 from flask_cors import CORS
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import (
+    JWTManager, create_access_token, jwt_required, get_jwt_identity
+)
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User
 from config import Config
 import os
-import requests  # chamadas externas (PokeAPI)
+import requests
+from datetime import timedelta
 
 # ==============================================
-# Inicialização básica do app
+# Inicialização do app
 # ==============================================
 app = Flask(__name__)
 app.config.from_object(Config)
 
-# CORS liberado para o Angular em http://localhost:4200
-CORS(app, resources={r"/*": {"origins": "http://localhost:4200"}}, supports_credentials=True)
+# 🔐 JWT (garante leitura via header Authorization: Bearer <token>)
+app.config.setdefault("JWT_TOKEN_LOCATION", ["headers"])
+app.config.setdefault("JWT_HEADER_NAME", "Authorization")
+app.config.setdefault("JWT_HEADER_TYPE", "Bearer")
+app.config.setdefault("JWT_ERROR_MESSAGE_KEY", "message")
 
+# 🌐 CORS (Angular em localhost e 127.0.0.1)
+CORS(
+    app,
+    resources={r"/*": {
+        "origins": ["http://localhost:4200", "http://127.0.0.1:4200"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "supports_credentials": True,
+        "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"]
+    }},
+)
+
+# DB + JWT
 db.init_app(app)
 jwt = JWTManager(app)
 
@@ -23,29 +42,31 @@ jwt = JWTManager(app)
 POKEAPI_BASE_URL = "https://pokeapi.co/api/v2/pokemon/"
 
 # ==============================================
-# 1) Configuração inicial e usuário admin
+# 1) Setup inicial e usuário admin
 # ==============================================
 with app.app_context():
     db.create_all()
 
-    # Caminho do banco na pasta /instance
-    db_path = os.path.join(app.instance_path, 'db.sqlite3')
-    print(f"Banco de dados ativo em: {db_path}")
+    try:
+        db_path = os.path.join(app.instance_path, 'db.sqlite3')
+        print(f"Banco de dados ativo em: {db_path}")
+    except Exception:
+        pass
 
-    # Cria usuário admin padrão se não existir
     if not User.query.filter_by(email="admin@teste.com").first():
-        user = User(
+        admin = User(
             name="Administrador",
             nickname="admin",
             email="admin@teste.com",
-            password=generate_password_hash("123456")
+            password=generate_password_hash("123456"),
+            is_admin=True
         )
-        db.session.add(user)
+        db.session.add(admin)
         db.session.commit()
-        print("Usuário admin criado com sucesso!")
+        print("✅ Usuário admin criado: admin@teste.com / 123456")
 
 # ==============================================
-# 2) Autenticação: registro / login / rota protegida
+# 2) Auth: registro / login / rota protegida
 # ==============================================
 @app.post("/register")
 def register():
@@ -67,8 +88,13 @@ def register():
         return jsonify({"msg": "E-mail já cadastrado!"}), 409
 
     hashed_password = generate_password_hash(password)
-    new_user = User(name=name, nickname=nickname, email=email, password=hashed_password)
-
+    new_user = User(
+        name=name,
+        nickname=nickname,
+        email=email,
+        password=hashed_password,
+        is_admin=False
+    )
     db.session.add(new_user)
     db.session.commit()
 
@@ -82,14 +108,12 @@ def login():
     password = data.get("password")
 
     user = User.query.filter_by(email=email).first()
-
     if not user or not check_password_hash(user.password, password):
         return jsonify({"msg": "Credenciais inválidas"}), 401
 
-    # Cria token JWT usando o e-mail como identidade
-    token = create_access_token(identity=user.email)
+    # ✅ Corrigido: subject deve ser string
+    token = create_access_token(identity=str(user.id))
 
-    # Retorna o token e os dados do usuário
     return jsonify({
         "msg": "Login bem-sucedido!",
         "access_token": token,
@@ -97,7 +121,8 @@ def login():
             "id": user.id,
             "name": user.name,
             "nickname": user.nickname,
-            "email": user.email
+            "email": user.email,
+            "is_admin": user.is_admin
         }
     }), 200
 
@@ -105,22 +130,22 @@ def login():
 @app.get("/protected")
 @jwt_required()
 def protected():
-    current_user = get_jwt_identity()
-    return jsonify({"msg": f"Acesso autorizado para {current_user}"}), 200
+    current_user_id = int(get_jwt_identity())  # ✅ convertido para int
+    user = User.query.get(current_user_id)
+    email = user.email if user else "desconhecido"
+    return jsonify({"msg": f"Acesso autorizado para {email}"}), 200
 
 # ==============================================
-# 3) Perfil do Usuário (GET/PUT) - Blueprint
+# 3) Perfil do Usuário (GET/PUT)
 # ==============================================
 profile_bp = Blueprint('profile', __name__, url_prefix="/api/profile")
+
 
 @profile_bp.route("/", methods=["GET"])
 @jwt_required()
 def get_profile():
-    """
-    Retorna os dados do usuário autenticado, com base no e-mail do token.
-    """
-    current_email = get_jwt_identity()
-    user = User.query.filter_by(email=current_email).first()
+    current_user_id = int(get_jwt_identity())  # ✅ conversão
+    user = User.query.get(current_user_id)
     if not user:
         return jsonify({"msg": "Usuário não encontrado"}), 404
 
@@ -128,32 +153,25 @@ def get_profile():
         "id": user.id,
         "name": user.name,
         "nickname": user.nickname,
-        "email": user.email
+        "email": user.email,
+        "is_admin": user.is_admin
     }), 200
 
 
 @profile_bp.route("/", methods=["PUT"])
 @jwt_required()
 def update_profile():
-    """
-    Atualiza os dados do usuário autenticado.
-    Campos aceitos: name, nickname, password (opcional).
-    A senha, se enviada, é salva com hash.
-    """
-    current_email = get_jwt_identity()
-    user = User.query.filter_by(email=current_email).first()
+    current_user_id = int(get_jwt_identity())
+    user = User.query.get(current_user_id)
     if not user:
         return jsonify({"msg": "Usuário não encontrado"}), 404
 
     data = request.get_json() or {}
 
-    # Atualiza campos básicos
     if "name" in data and data["name"]:
         user.name = data["name"]
     if "nickname" in data and data["nickname"]:
         user.nickname = data["nickname"]
-
-    # Atualiza senha se enviada
     if "password" in data and data["password"]:
         user.password = generate_password_hash(data["password"])
 
@@ -165,14 +183,40 @@ def update_profile():
             "id": user.id,
             "name": user.name,
             "nickname": user.nickname,
-            "email": user.email
+            "email": user.email,
+            "is_admin": user.is_admin
         }
     }), 200
+
 
 app.register_blueprint(profile_bp)
 
 # ==============================================
-# 4) Rotas da PokéAPI (filtros / busca)
+# 4) Rotas administrativas
+# ==============================================
+@app.route("/api/users", methods=["GET"])
+@jwt_required()
+def get_users():
+    current_user_id = int(get_jwt_identity())  # ✅ conversão
+    current_user = User.query.get(current_user_id)
+
+    if not current_user or not current_user.is_admin:
+        return jsonify({"error": "Acesso negado"}), 403
+
+    users = User.query.all()
+    return jsonify([
+        {
+            "id": u.id,
+            "name": u.name,
+            "nickname": u.nickname,
+            "email": u.email,
+            "is_admin": u.is_admin
+        }
+        for u in users
+    ]), 200
+
+# ==============================================
+# 5) Rotas PokéAPI
 # ==============================================
 @app.get("/pokemon/filter")
 def filter_pokemon_data():
@@ -234,11 +278,6 @@ def filter_pokemon_data():
             "count": len(final_results)
         }), 200
 
-    except requests.exceptions.HTTPError as e:
-        if e.response.status_code == 404:
-            return jsonify({"msg": "Geração ou Tipo de Pokémon não encontrado/inválido."}), 404
-        return jsonify({"msg": f"Erro ao consultar API externa: {e}"}), 503
-
     except requests.exceptions.RequestException:
         return jsonify({"msg": "Erro de rede ao comunicar com a PokéAPI."}), 503
 
@@ -277,17 +316,34 @@ def get_pokemon_data(name_or_id):
         return jsonify({"msg": "Erro ao comunicar com o serviço de Pokémon externo."}), 503
 
 # ==============================================
-# 5) Favoritos (Blueprint existente)
+# 6) Blueprints de Favoritos e Equipe
 # ==============================================
 from favorites import favorites_bp
-app.register_blueprint(favorites_bp)
-
 from equip import equip_bp
+
+app.register_blueprint(favorites_bp)
 app.register_blueprint(equip_bp)
 
+# ==============================================
+# 7) Healthcheck e erros padrão
+# ==============================================
+@app.get("/health")
+def health():
+    return jsonify({"status": "ok"}), 200
+
+
+@app.errorhandler(404)
+def not_found(e):
+    return jsonify({"error": "Rota não encontrada"}), 404
+
+
+@app.errorhandler(500)
+def internal_error(e):
+    return jsonify({"error": "Erro interno do servidor"}), 500
+
 
 # ==============================================
-# 6) Execução do App
+# 8) Execução
 # ==============================================
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(debug=True, host="0.0.0.0", port=5000)

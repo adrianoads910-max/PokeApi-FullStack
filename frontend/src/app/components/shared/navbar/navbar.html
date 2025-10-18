@@ -74,9 +74,14 @@
         <a (click)="navigateTo('/favorites')" class="block px-4 py-2 hover:bg-red-500 transition">
           ⭐ Meus Favoritos
         </a>
-        <a (click)="navigateTo('/config')" class="block px-4 py-2 hover:bg-red-500 transition">
-          ⚙️ Configurações
+        <a 
+          *ngIf="authService.isAdmin"
+          routerLink="/users"
+          routerLinkActive="text-white font-semibold"
+          class="text-slate-100 hover:text-white transition">
+          <i class="fas fa-user-shield mr-1"></i> Gestão de Usuários
         </a>
+
         <button
           (click)="logout()"
           class="w-full text-left px-4 py-2 hover:bg-red-500 transition"

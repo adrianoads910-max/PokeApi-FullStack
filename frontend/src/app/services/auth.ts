@@ -3,14 +3,19 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 
+/**
+ * Interface para resposta do backend no login
+ */
 export interface AuthLoginResponse {
-  access_token?: string;   // formato novo (recomendado)
-  token?: string;          // formato legado
+  access_token?: string;   // formato novo (JWT moderno)
+  token?: string;          // formato legado (para compatibilidade)
   user?: {
     id?: number;
     name?: string;
     email?: string;
     nickname?: string;
+    is_admin?: boolean;
+    role?: string;
     [k: string]: any;
   };
   [k: string]: any;
@@ -18,99 +23,112 @@ export interface AuthLoginResponse {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private apiUrl = 'http://127.0.0.1:5000';
+  private apiUrl = 'http://127.0.0.1:5000'; // ajuste se necessário
 
-  // estado reativo do usuário
+  /** Estado reativo do usuário logado */
   private userSubject = new BehaviorSubject<any>(this.getUserFromStorage());
   public user$ = this.userSubject.asObservable();
 
   constructor(private http: HttpClient) {}
 
-  // ========== AUTH CORE ==========
+  // =============================
+  // 🔹 MÉTODOS PRINCIPAIS DE AUTH
+  // =============================
 
-  /** Efetua login no backend e atualiza token + usuário (nome incluso) */
+  /** Login no backend e atualização de token + usuário */
   login(email: string, password: string): Observable<AuthLoginResponse> {
     return this.http.post<AuthLoginResponse>(`${this.apiUrl}/login`, { email, password }).pipe(
       tap((res) => this.applyLoginResponse(res, email))
     );
   }
 
-  /** Registro de usuário (ajuste o payload conforme seu backend) */
+  /** Registro de usuário (ajuste payload conforme backend) */
   register(data: { name: string; email: string; password: string; nickname?: string }): Observable<any> {
     return this.http.post(`${this.apiUrl}/register`, data);
   }
 
-  /** Logout total: limpa token e usuário e notifica os assinantes */
+  /** Logout completo: limpa token e usuário */
   logout(): void {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     this.userSubject.next(null);
   }
 
-  // ========== STATE HELPERS ==========
+  // =============================
+  // 🔹 MÉTODOS DE ESTADO / USUÁRIO
+  // =============================
 
-  /** Define/atualiza o usuário atual e emite para quem estiver assinando user$ */
+  /** Atualiza o usuário atual e emite para quem estiver ouvindo o observable */
   setUser(user: any): void {
     localStorage.setItem('user', JSON.stringify(user));
     this.userSubject.next(user);
   }
 
-  /** Limpa apenas usuário (use logout() para limpar tudo) */
+  /** Limpa apenas usuário (mantendo token, se houver) */
   clearUser(): void {
     localStorage.removeItem('user');
     this.userSubject.next(null);
   }
 
-  /** Retorna o usuário salvo (ou null) */
+  /** Retorna o usuário salvo localmente */
   getUser(): any {
     return this.getUserFromStorage();
   }
 
-  /** Retorna o token JWT salvo (ou null) */
+  /** Retorna o token JWT armazenado */
   getToken(): string | null {
     return localStorage.getItem('token');
   }
 
-  /** Informa se há um token persistido */
+  /** Informa se há token ativo */
   isLoggedIn(): boolean {
     return !!this.getToken();
   }
 
-  /** Headers com Authorization para chamadas autenticadas */
+  /** Headers padrão com Authorization */
   getAuthHeaders(): HttpHeaders {
     const token = this.getToken();
     return new HttpHeaders(token ? { Authorization: `Bearer ${token}` } : {});
   }
 
-  // ========== INTERNALS ==========
+  /** 🔸 Verifica se o usuário logado é admin */
+  get isAdmin(): boolean {
+    const user = this.getUser();
+    return user?.is_admin === true || user?.role === 'admin';
+  }
 
-  /** Aplica resposta de login em localStorage e emite user$ */
+  // =============================
+  // 🔹 MÉTODOS INTERNOS (privados)
+  // =============================
+
+  /** Processa a resposta do backend e armazena token + usuário */
   private applyLoginResponse(res: AuthLoginResponse, emailFallback: string): void {
-    // Token (suporta formato novo e legado)
+    // Token (aceita formato novo e legado)
     const token = res?.access_token || res?.token || null;
     if (token) {
       localStorage.setItem('token', token);
     }
 
-    // Usuário
+    // Usuário (preferencialmente retornado pelo backend)
     let user = res?.user;
     if (!user) {
-      // fallback caso backend não retorne user (minimamente útil para navbar)
-      const nameFromEmail = emailFallback?.includes('@') ? emailFallback.split('@')[0] : emailFallback || 'Usuário';
-      user = { email: emailFallback, name: nameFromEmail };
+      // fallback mínimo para casos onde o backend não envia user
+      const nameFromEmail = emailFallback?.includes('@')
+        ? emailFallback.split('@')[0]
+        : emailFallback || 'Usuário';
+      user = { email: emailFallback, name: nameFromEmail, is_admin: false };
     }
 
     localStorage.setItem('user', JSON.stringify(user));
     this.userSubject.next(user);
   }
 
-  /** Lê usuário do localStorage com segurança */
+  /** Recupera usuário do localStorage com segurança */
   private getUserFromStorage(): any {
     const raw = localStorage.getItem('user');
     try {
       return raw ? JSON.parse(raw) : null;
     } catch {
-      // se alguém gravou algo inválido no localStorage, limpamos e seguimos
       localStorage.removeItem('user');
       return null;
     }

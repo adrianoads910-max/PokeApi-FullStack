@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../services/auth';
+import { FormsModule } from '@angular/forms';
 
 
 @Component({
@@ -10,14 +11,14 @@ import { AuthService } from '../../../services/auth';
   standalone: true,
   templateUrl: './navbar.html',
   styleUrls: ['./navbar.css'],
-  imports: [CommonModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterLink, RouterLinkActive, FormsModule],
 })
 export class Navbar {
   isMenuOpen = false;
   isUserMenuOpen = false;
   user: any = null;
 
-  constructor(private router: Router, private authService: AuthService) {
+  constructor(private router: Router, public authService: AuthService) {
     this.user = this.authService.getUser();
     this.authService.user$.subscribe((u) => (this.user = u));
   }
