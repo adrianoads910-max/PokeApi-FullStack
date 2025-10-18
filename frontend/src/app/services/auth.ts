@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { API_URL } from '../api';
 
 /**
  * Interface para resposta do backend no login
@@ -23,7 +24,7 @@ export interface AuthLoginResponse {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private apiUrl = 'http://127.0.0.1:5000'; // ajuste se necessário
+  //private apiUrl = 'http://127.0.0.1:5000'; // ajuste se necessário
 
   /** Estado reativo do usuário logado */
   private userSubject = new BehaviorSubject<any>(this.getUserFromStorage());
@@ -37,14 +38,14 @@ export class AuthService {
 
   /** Login no backend e atualização de token + usuário */
   login(email: string, password: string): Observable<AuthLoginResponse> {
-    return this.http.post<AuthLoginResponse>(`${this.apiUrl}/login`, { email, password }).pipe(
+    return this.http.post<AuthLoginResponse>(`${API_URL}/login`, { email, password }).pipe(
       tap((res) => this.applyLoginResponse(res, email))
     );
   }
 
   /** Registro de usuário (ajuste payload conforme backend) */
   register(data: { name: string; email: string; password: string; nickname?: string }): Observable<any> {
-    return this.http.post(`${this.apiUrl}/register`, data);
+    return this.http.post(`${API_URL}/register`, data);
   }
 
   /** Logout completo: limpa token e usuário */

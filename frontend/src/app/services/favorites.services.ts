@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { API_URL } from '../api';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://127.0.0.1:5000';
+  //private apiUrl = 'http://127.0.0.1:5000';
   private userSubject = new BehaviorSubject<any>(this.getUser());
   public user$ = this.userSubject.asObservable();
 
@@ -15,7 +16,7 @@ export class AuthService {
 
   // Faz login e armazena token + dados do usuário
   login(email: string, password: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/login`, { email, password }).pipe(
+    return this.http.post(`${API_URL}/login`, { email, password }).pipe(
       tap((response: any) => {
         if (response && response.access_token) {
           // Salva o token

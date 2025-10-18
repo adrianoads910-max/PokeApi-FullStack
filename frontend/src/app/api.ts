@@ -1,4 +1,6 @@
-export const API_URL = 'https://pokeapi-fullstack.onrender.com';  // ou localhost
+// src/api.ts
+export const API_URL = 'https://pokeapi-fullstack.onrender.com';
+  // ou localhost
 
 
 // Troque esta URL dependendo do ambiente (local ou produção)

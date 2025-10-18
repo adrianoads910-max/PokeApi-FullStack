@@ -47,7 +47,7 @@ export class List implements OnInit {
   equipe: any[] = [];
 
   //private apiUrl = 'http://127.0.0.1:5000';
-  private API_URL = 'https://pokeapi-fullstack.onrender.com'; ;
+  
   constructor(private http: HttpClient, private router: Router) {}
 
   ngOnInit(): void {

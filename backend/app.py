@@ -27,7 +27,7 @@ app.config.setdefault("JWT_ERROR_MESSAGE_KEY", "message")
 CORS(
     app,
     resources={r"/*": {
-        "origins": ["http://localhost:4200", "http://127.0.0.1:4200", "https://github.com/adrianoads910-max/PokeApi-FullStack"],
+        "origins": ["http://localhost:4200", "http://127.0.0.1:4200", "https://adrianoads910-max.github.io"],
         "allow_headers": ["Content-Type", "Authorization"],
         "supports_credentials": True,
         "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"]
