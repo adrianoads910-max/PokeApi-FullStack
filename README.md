@@ -1,192 +1,186 @@
 
-# 🧩 PokeApi-FullStack
+# 🎮 Poké-Explorer | PokeApi-FullStack
 
-Aplicação **Full Stack** desenvolvida para consumir e gerenciar dados da **PokéAPI**, com frontend em **Angular + TailwindCSS** e backend em **Python + SQL + JWT** para autenticação.
+Aplicação Full Stack que consome e gerencia dados da **PokéAPI**, permitindo ao usuário explorar Pokémon, montar equipes, favoritar e autenticar via login com JWT.
+
+💻 **Frontend:** Angular + TailwindCSS  
+🛠 **Backend:** Flask (Python) + SQLAlchemy + JWT  
+🛡 **Autenticação:** JSON Web Token (JWT)  
+🐍 **PokéAPI:** https://pokeapi.co  
 
 ---
 
-## 🚀 Visão Geral
+## 🌐 Deploys Online
 
-O projeto tem como objetivo fornecer uma plataforma moderna e responsiva que exibe informações sobre Pokémons obtidas da PokéAPI.  
-Inclui:
-- **Frontend (Angular)**: Interface interativa com design responsivo via TailwindCSS.
-- **Backend (Python)**: API REST segura, conectada a banco de dados SQL e protegida com JWT.
+| Serviço       | URL |
+|--------------|-----|
+| **Frontend (Angular)** | ✅ https://adrianoads910-max.github.io/PokeApi-FullStack/ |
+| **Backend (Flask)**    | ✅ https://pokeapi-fullstack.onrender.com |
+
+⚠ *O backend no Render pode demorar até 50s para acordar (servidor gratuito "sleep mode").*
+
+---
+
+## 🧪 Branch de Desenvolvimento Local
+
+A branch `teste-local` foi criada para desenvolvimento *offline*. Ela usa:
+
+| Serviço      | URL Local |
+|--------------|-----------|
+| Frontend     | http://localhost:4200 |
+| Backend      | http://127.0.0.1:5000 |
+
+### ✅ Como rodar localmente:
+
+```bash
+git clone https://github.com/adrianoads910-max/PokeApi-FullStack.git
+cd PokeApi-FullStack
+git checkout teste-local
+````
+
+**Backend**
+
+```bash
+cd backend
+pip install -r requirements.txt
+python app.py
+```
+
+**Frontend**
+
+```bash
+cd frontend
+npm install
+ng serve
+```
 
 ---
 
 ## 🧱 Estrutura do Projeto
 
 ```
-
 PokeApi-FullStack/
 │
-├── backend/                 ← API Python (Flask)
-│   ├── app/
-│   │   ├── models/          ← modelos e tabelas SQL
-│   │   ├── routes/          ← endpoints REST
-│   │   ├── services/        ← regras de negócio
-│   │   ├── auth/            ← autenticação JWT
-│   │   └── **init**.py
-│   ├── requirements.txt
-│   └── config.py
+├── backend/                 ← API Flask + JWT + SQLAlchemy
+│   ├── models/             ← modelos / tabelas SQL
+│   ├── routes/             ← endpoints REST
+│   ├── favorites.py        ← rota de favoritos
+│   ├── equip.py            ← rota de equipe (máx. 6 Pokémon)
+│   ├── app.py              ← ponto principal da API
+│   ├── config.py           ← configurações e variáveis
+│   └── requirements.txt
 │
-├── frontend/                ← app Angular + Tailwind
-│   ├── src/
-│   │   ├── app/
-│   │   ├── assets/
-│   │   └── environments/
+├── frontend/                ← Angular + Tailwind
+│   ├── src/app/            ← componentes
+│   ├── assets/             ← imagens, ícones
+│   ├── environments/       ← URLs de produção e localhost
 │   ├── tailwind.config.js
-│   ├── package.json
-│   └── angular.json
+│   └── package.json
 │
 └── README.md
-
-````
-
----
-
-## 🧩 Tecnologias utilizadas
-
-### 🖥️ Frontend
-- **Angular 18+**
-- **TailwindCSS** (para estilização)
-- **TypeScript**
-- **RxJS / HttpClient** (requisições e observables)
-- **Angular Router** (navegação de rotas)
-
-### ⚙️ Backend
-- **Python 3.11+**
-- **FastAPI** ou **Flask**
-- **SQLAlchemy** (ORM)
-- **SQLite / PostgreSQL / MySQL** (dependendo do ambiente)
-- **PyJWT** (autenticação via JSON Web Token)
-- **Pydantic** (validação de dados)
-- **CORS Middleware** (para comunicação segura com o frontend)
-
----
-
-## 🔐 Autenticação (JWT)
-
-O backend utiliza **JSON Web Tokens (JWT)** para autenticação:
-- O usuário faz login e recebe um token JWT.
-- Esse token é enviado no header (`Authorization: Bearer <token>`) em cada requisição.
-- O backend valida o token e autoriza o acesso às rotas protegidas.
-
----
-
-## 🧠 Funcionalidades principais
-
-✅ Listagem de Pokémons com informações básicas  
-✅ Busca por nome ou tipo  
-✅ Página de detalhes de cada Pokémon  
-✅ Autenticação de usuário (login/logout)  
-✅ Favoritar Pokémons (usuário autenticado)  
-✅ Integração com a PokéAPI  
-✅ API Python segura com JWT  
-✅ Banco SQL para armazenamento de usuários e favoritos
-
----
-
-## 🧰 Como executar o projeto localmente
-
-### 1️⃣ Clonar o repositório
-```bash
-git clone https://github.com/adrianoads910-max/PokeApi-FullStack.git
-cd PokeApi-FullStack
-````
-
----
-
-### 2️⃣ Backend (Python)
-
-```bash
-cd backend
-python -m venv venv
-.\venv\Scripts\activate    # (Windows)
-pip install -r requirements.txt
-uvicorn app.main:app --reload
 ```
 
-O servidor será iniciado em `http://localhost:8000`.
+---
+
+## ✅ Funcionalidades
+
+✔ Listagem de Pokémons com imagem, tipos e ID
+✔ Filtro por geração, tipo, nome ou ID
+✔ Login / Cadastro de usuário
+✔ Favoritar pokémon
+✔ Criar equipe (máximo 6 Pokémon)
+✔ Salvo no banco de dados local (SQLite / Render)
+✔ Consumo real da PokéAPI
+
+
+##🐜 Bugs (Versão online gh-pages + render)
+✔ Algumas vezes o render não da deploy no backend o que ocsaionar erros de login
+✔ Demora para carregar filtros "todos"
 
 ---
 
-### 3️⃣ Frontend (Angular)
+## 🧠 Tecnologias utilizadas
 
-Em outro terminal:
+| Frontend          | Backend            | Extra         |
+| ----------------- | ------------------ | ------------- |
+| Angular 18+       | Flask (Python)     | PokéAPI       |
+| TailwindCSS       | SQLAlchemy (ORM)   | JWT (Auth)    |
+| TypeScript        | SQLite (local)     | CORS          |
+| RxJS + HttpClient | Flask-JWT-Extended | Render Deploy |
 
-```bash
-cd frontend
-npm install
-npm run start
+---
+
+## ⚙ Comunicação Front ↔ Back
+
+Exemplo de requisição no Angular:
+
+```typescript
+this.http.get(`${API_URL}/pokemon/filter?generation=1`)
 ```
 
-O app será acessível em `http://localhost:4200`.
+No backend Flask:
+
+```python
+@app.route("/pokemon/filter", methods=["GET"])
+def filter_pokemon():
+    # retorna JSON com lista de Pokémon filtrados
+```
+
+O valor de `API_URL` vem de:
+
+```
+frontend/src/environments/environment.ts   (localhost)
+frontend/src/environments/environment.prod.ts (produção)
+```
 
 ---
 
-## ⚡ Comunicação Front ↔ Back
+## 🚀 Deploy Manual
 
-* O Angular consome endpoints do backend Python, por exemplo:
+### Publicar **Frontend** no GitHub Pages:
 
-  ```
-  GET http://localhost:8000/api/pokemon
-  POST http://localhost:8000/api/auth/login
-  ```
-* Configure a URL base em `frontend/src/environments/environment.ts`:
+```bash
+ng build --configuration production --base-href "/PokeApi-FullStack/"
+npx angular-cli-ghpages --dir=dist/pokeapi/browser
+```
 
-  ```ts
-  export const environment = {
-    apiUrl: 'http://localhost:8000/api'
-  };
-  ```
+### Atualizar **Backend** no Render:
 
----
+Apenas:
 
-## 🧾 Scripts úteis
+```bash
+git add .
+git commit -m "Atualizando backend"
+git push origin master
+```
 
-### Backend
-
-| Comando                         | Ação                           |
-| ------------------------------- | ------------------------------ |
-| `uvicorn app.main:app --reload` | Inicia servidor local          |
-| `pytest`                        | Executa testes                 |
-| `black .`                       | Formata código automaticamente |
-
-### Frontend
-
-| Comando         | Ação                        |
-| --------------- | --------------------------- |
-| `npm run start` | Inicia servidor Angular     |
-| `npm run build` | Gera build de produção      |
-| `npm run lint`  | Analisa o código com eslint |
+O Render faz o deploy automaticamente.
 
 ---
 
-## 🚀 Deploy (sugestão)
+## 📌 Branches do Repositório
 
-* **Backend**: Render, Railway, ou Docker + VPS
-* **Frontend**: Vercel, Netlify ou GitHub Pages
-* Configure variáveis de ambiente:
-
-  ```
-  DATABASE_URL=sqlite:///pokeapi.db
-  SECRET_KEY=<sua_chave_jwt>
-  ```
+| Branch        | Descrição                                                           |
+| ------------- | ------------------------------------------------------------------- |
+| `master`      | Produção – Deploy no Render & GitHub Pages                          |
+| `gh-pages`    | Código compilado do Angular para deploy                             |
+| `teste-local` | Ambiente de desenvolvimento local (localhost:4200 / 127.0.0.1:5000) |
 
 ---
 
 ## 📄 Licença
 
-Este projeto está sob a licença MIT.
-Sinta-se à vontade para usar e contribuir!
+Este projeto está sob a licença **MIT**.
+Fique à vontade para usar, estudar ou contribuir!
 
 ---
 
-### ✨ Autor
+## ✨ Autor
 
-**Adriano ADS**
-[GitHub](https://github.com/adrianoads910-max)
+👨‍💻 **Adriano ADS**
+📌 GitHub: [https://github.com/adrianoads910-max](https://github.com/adrianoads910-max)
 
 
 
+✅ **Posso já salvar esse README.md direto no repositório se quiser.** Quer que eu faça isso?
+```
