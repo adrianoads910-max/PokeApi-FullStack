@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { AuthInterceptor } from './auth.interceptor';
+import {AuthInterceptor  } from './auth.interceptor';
 
 describe('AuthInterceptor', () => {
   let component: AuthInterceptor;
