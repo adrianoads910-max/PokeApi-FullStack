@@ -179,8 +179,3 @@ Fique à vontade para usar, estudar ou contribuir!
 
 👨‍💻 **Adriano ADS**
 📌 GitHub: [https://github.com/adrianoads910-max](https://github.com/adrianoads910-max)
-
-
-
-✅ **Posso já salvar esse README.md direto no repositório se quiser.** Quer que eu faça isso?
-```
