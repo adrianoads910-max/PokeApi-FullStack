@@ -23,28 +23,34 @@ app.config.setdefault("JWT_HEADER_NAME", "Authorization")
 app.config.setdefault("JWT_HEADER_TYPE", "Bearer")
 app.config.setdefault("JWT_ERROR_MESSAGE_KEY", "message")
 
-# 🌐 CORS (Angular em localhost e 127.0.0.1)
-
-CORS(app, resources={r"/*": {
-    "origins": ["http://localhost:4200", 
+# 🌐 CORS — libera frontend local, GitHub Pages e domínio do Render
+CORS(
+    app,
+    resources={
+        r"/*": {
+            "origins": [
+                "http://localhost:4200",
                 "http://127.0.0.1:4200",
                 "https://adrianoads910-max.github.io",
-                "https://pokeapi-fullstack.onrender.com"],
-    "allow_headers": ["Content-Type", "Authorization"],
-    "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    "supports_credentials": True
-}})
+                "https://pokeapi-fullstack.onrender.com",
+            ],
+            "allow_headers": ["Content-Type", "Authorization"],
+            "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
+            "supports_credentials": True,
+        }
+    },
+)
 
-
-# DB + JWT
+# ==============================================
+# Banco de dados e JWT
+# ==============================================
 db.init_app(app)
 jwt = JWTManager(app)
 
-# URL Base da PokéAPI
 POKEAPI_BASE_URL = "https://pokeapi.co/api/v2/pokemon/"
 
 # ==============================================
-# 1) Setup inicial e usuário admin
+# 1) Setup inicial e criação de admin
 # ==============================================
 with app.app_context():
     db.create_all()
@@ -113,7 +119,7 @@ def login():
     if not user or not check_password_hash(user.password, password):
         return jsonify({"msg": "Credenciais inválidas"}), 401
 
-    # ✅ Corrigido: subject deve ser string
+    # ✅ subject/identity como string
     token = create_access_token(identity=str(user.id))
 
     return jsonify({
@@ -132,7 +138,7 @@ def login():
 @app.get("/protected")
 @jwt_required()
 def protected():
-    current_user_id = int(get_jwt_identity())  # ✅ convertido para int
+    current_user_id = int(get_jwt_identity())
     user = User.query.get(current_user_id)
     email = user.email if user else "desconhecido"
     return jsonify({"msg": f"Acesso autorizado para {email}"}), 200
@@ -146,7 +152,7 @@ profile_bp = Blueprint('profile', __name__, url_prefix="/api/profile")
 @profile_bp.route("/", methods=["GET"])
 @jwt_required()
 def get_profile():
-    current_user_id = int(get_jwt_identity())  # ✅ conversão
+    current_user_id = int(get_jwt_identity())
     user = User.query.get(current_user_id)
     if not user:
         return jsonify({"msg": "Usuário não encontrado"}), 404
@@ -199,7 +205,7 @@ app.register_blueprint(profile_bp)
 @app.route("/api/users", methods=["GET"])
 @jwt_required()
 def get_users():
-    current_user_id = int(get_jwt_identity())  # ✅ conversão
+    current_user_id = int(get_jwt_identity())
     current_user = User.query.get(current_user_id)
 
     if not current_user or not current_user.is_admin:
@@ -222,12 +228,16 @@ def get_users():
 # ==============================================
 @app.route("/pokemon/filter", methods=["GET"])
 def filter_pokemon():
+    """
+    Filtra Pokémon por geração e/ou tipo.
+    Se nenhum filtro for enviado, retorna um lote padrão (limit menor para evitar timeout).
+    """
     generation_id = request.args.get("generation")
     type_name = request.args.get("type")
     results = []
 
     try:
-        # ✅ Caso nenhum filtro seja enviado → retorna os primeiros 50 Pokémon
+        # ✅ Sem filtros → lote inicial menor para performance (padrão 50)
         if not generation_id and not type_name:
             base_url = "https://pokeapi.co/api/v2/pokemon?limit=50&offset=0"
             response = requests.get(base_url, timeout=5)
@@ -297,7 +307,10 @@ def filter_pokemon():
             type_data = requests.get(type_url, timeout=5).json()
 
             gen_species = {p["name"] for p in gen_data.get("pokemon_species", [])}
-            filtered = [p["pokemon"] for p in type_data.get("pokemon", []) if p["pokemon"]["name"] in gen_species]
+            filtered = [
+                p["pokemon"] for p in type_data.get("pokemon", [])
+                if p["pokemon"]["name"] in gen_species
+            ]
 
             for poke in filtered:
                 poke_response = requests.get(poke["url"], timeout=5)
@@ -315,6 +328,10 @@ def filter_pokemon():
     except requests.exceptions.Timeout:
         return jsonify({"msg": "PokéAPI demorou demais para responder. Tente novamente."}), 504
 
+    except requests.exceptions.RequestException as e:
+        print(f"Erro de rede: {e}")
+        return jsonify({"msg": "Erro de rede ao buscar dados da PokéAPI."}), 503
+
     except Exception as e:
         print(f"Erro inesperado: {e}")
         return jsonify({"msg": "Erro interno ao processar o filtro."}), 500
@@ -325,7 +342,7 @@ def get_pokemon_data(name_or_id):
     url = f"{POKEAPI_BASE_URL}{name_or_id.lower()}"
 
     try:
-        response = requests.get(url)
+        response = requests.get(url, timeout=5)
 
         if response.status_code == 404:
             return jsonify({"msg": f"Pokémon '{name_or_id}' não encontrado."}), 404
@@ -349,6 +366,9 @@ def get_pokemon_data(name_or_id):
         }
 
         return jsonify(pokemon_info), 200
+
+    except requests.exceptions.Timeout:
+        return jsonify({"msg": "PokéAPI demorou demais para responder. Tente novamente."}), 504
 
     except requests.exceptions.RequestException:
         return jsonify({"msg": "Erro ao comunicar com o serviço de Pokémon externo."}), 503
