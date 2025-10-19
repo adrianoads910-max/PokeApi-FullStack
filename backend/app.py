@@ -223,26 +223,32 @@ def get_users():
         for u in users
     ]), 200
 
-# ==============================================
+## ==============================================
 # 5) Rotas PokéAPI
 # ==============================================
 @app.route("/pokemon/filter", methods=["GET"])
 def filter_pokemon():
     """
     Filtra Pokémon por geração e/ou tipo.
-    Se nenhum filtro for enviado, retorna um lote padrão (limit menor para evitar timeout).
+    Agora com correção para:
+    ✅ type="" ser ignorado
+    ✅ resultados ordenados por ID da Pokédex
+    ✅ melhor desempenho com timeout
     """
     generation_id = request.args.get("generation")
     type_name = request.args.get("type")
+
+    # 🔹 Se o type vier vazio ("") → tratar como None
+    if type_name == "":
+        type_name = None
+
     results = []
 
     try:
-        # ✅ Sem filtros → lote inicial menor para performance (padrão 50)
+        # ✅ Sem filtros → retorna primeiros 50 Pokémon (padrão para performance)
         if not generation_id and not type_name:
             base_url = "https://pokeapi.co/api/v2/pokemon?limit=50&offset=0"
-            response = requests.get(base_url, timeout=5)
-            response.raise_for_status()
-            data = response.json()
+            data = requests.get(base_url, timeout=5).json()
 
             for entry in data.get("results", []):
                 poke_response = requests.get(entry["url"], timeout=5)
@@ -255,14 +261,14 @@ def filter_pokemon():
                         "sprite_url": poke_data["sprites"]["front_default"],
                     })
 
+            # 🔹 Ordenar pelo ID da Pokédex
+            results.sort(key=lambda x: x["id"])
             return jsonify({"results": results, "count": len(results)}), 200
 
         # ✅ Apenas geração
         if generation_id and not type_name:
             gen_url = f"https://pokeapi.co/api/v2/generation/{generation_id}"
-            response = requests.get(gen_url, timeout=5)
-            response.raise_for_status()
-            data = response.json()
+            data = requests.get(gen_url, timeout=5).json()
 
             for species in data.get("pokemon_species", []):
                 species_name = species["name"]
@@ -276,14 +282,13 @@ def filter_pokemon():
                         "sprite_url": poke_data["sprites"]["front_default"],
                     })
 
+            results.sort(key=lambda x: x["id"])
             return jsonify({"results": results, "count": len(results)}), 200
 
         # ✅ Apenas tipo
         if type_name and not generation_id:
             type_url = f"https://pokeapi.co/api/v2/type/{type_name.lower()}"
-            response = requests.get(type_url, timeout=5)
-            response.raise_for_status()
-            data = response.json()
+            data = requests.get(type_url, timeout=5).json()
 
             for poke in data.get("pokemon", []):
                 poke_response = requests.get(poke["pokemon"]["url"], timeout=5)
@@ -296,6 +301,7 @@ def filter_pokemon():
                         "sprite_url": poke_data["sprites"]["front_default"],
                     })
 
+            results.sort(key=lambda x: x["id"])
             return jsonify({"results": results, "count": len(results)}), 200
 
         # ✅ Geração + Tipo
@@ -323,18 +329,16 @@ def filter_pokemon():
                         "sprite_url": poke_data["sprites"]["front_default"],
                     })
 
+            results.sort(key=lambda x: x["id"])
             return jsonify({"results": results, "count": len(results)}), 200
 
     except requests.exceptions.Timeout:
         return jsonify({"msg": "PokéAPI demorou demais para responder. Tente novamente."}), 504
 
-    except requests.exceptions.RequestException as e:
-        print(f"Erro de rede: {e}")
-        return jsonify({"msg": "Erro de rede ao buscar dados da PokéAPI."}), 503
-
     except Exception as e:
         print(f"Erro inesperado: {e}")
         return jsonify({"msg": "Erro interno ao processar o filtro."}), 500
+
 
 
 @app.get("/pokemon/search/<name_or_id>")

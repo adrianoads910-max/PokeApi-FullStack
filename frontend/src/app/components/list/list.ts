@@ -101,50 +101,40 @@ export class List implements OnInit {
   // 🔍 BUSCA GERAL COM FILTROS
   // ==========================================================
   searchPokemon(initialLoad = false): void {
-    this.loading = true;
-    const params: any = {};
+  this.loading = true;
+  const params: any = {};
 
-    // Se não houver filtro, força geração 1
-    if (!this.generation && !this.type) {
-      params['generation'] = '1';
-    } else {
-      if (this.generation) params['generation'] = this.generation;
-      if (this.type) params['type'] = this.type.toLowerCase();
+  // Se filtro for TODOS (tipo vazio), não envia "type" para a API
+  if (this.generation) params['generation'] = this.generation;
+  if (this.type) params['type'] = this.type.toLowerCase(); // só envia se existir
+
+  this.http.get(`${API_URL}/pokemon/filter`, { params }).subscribe({
+    next: (response: any) => {
+      this.pokemons = (response.results || [])
+        // ✅ Ordena pelo número da Pokédex (ID crescente)
+        .sort((a: any, b: any) => a.id - b.id);
+
+      // Ordena favoritos e equipe no topo
+      this.pokemons.sort((a, b) => {
+        const aEquipe = this.isEquip(a.id) ? 1 : 0;
+        const bEquipe = this.isEquip(b.id) ? 1 : 0;
+        const aFav = this.isFavorite(a.id) ? 1 : 0;
+        const bFav = this.isFavorite(b.id) ? 1 : 0;
+        return (bEquipe - aEquipe) || (bFav - aFav);
+      });
+
+      this.totalCount = this.pokemons.length;
+      this.loading = false;
+
+      if (initialLoad) this.message = `Pokémons carregados (${this.totalCount})`;
+    },
+    error: () => {
+      this.pokemons = [];
+      this.loading = false;
+      this.message = 'Erro ao carregar Pokémons.';
     }
-
-    this.http.get(`${API_URL}/pokemon/filter`, { params }).subscribe({
-      next: (response: any) => {
-        this.pokemons = response.results || [];
-
-        // Ordena equipe e favoritos no topo
-        this.pokemons.sort((a, b) => {
-          const aEquipe = this.isEquip(a.id) ? 1 : 0;
-          const bEquipe = this.isEquip(b.id) ? 1 : 0;
-          const aFav = this.isFavorite(a.id) ? 1 : 0;
-          const bFav = this.isFavorite(b.id) ? 1 : 0;
-          return (bEquipe - aEquipe) || (bFav - aFav);
-        });
-
-        this.totalCount = this.pokemons.length;
-        this.loading = false;
-
-        if (initialLoad) {
-          this.message = `Pokémons da Geração 1 carregados (${this.totalCount})`;
-        } else {
-          this.message = this.totalCount
-            ? ''
-            : 'Nenhum Pokémon encontrado.';
-        }
-      },
-      error: (err) => {
-        console.error('❌ Erro ao carregar Pokémons:', err);
-        this.pokemons = [];
-        this.totalCount = 0;
-        this.loading = false;
-        this.message = 'Erro ao carregar Pokémons.';
-      }
-    });
-  }
+  });
+}
 
   // ==========================================================
   // 🧭 CATEGORIAS (TODOS / FAVORITOS / EQUIPE)
